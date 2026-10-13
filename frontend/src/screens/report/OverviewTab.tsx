@@ -1,4 +1,5 @@
-import { CalendarClock, Gauge, Lightbulb, Pill, Shapes, ShieldAlert, ShieldCheck, Stethoscope, Zap } from 'lucide-react'
+import { CalendarClock, Gauge, Lightbulb, Pill, Shapes, ShieldAlert, ShieldCheck, Zap } from 'lucide-react'
+import { BlueprintFrame } from '../../components/brand/BlueprintFrame'
 import { ReadinessRadar } from '../../components/ReadinessRadar'
 import { Badge, Card, Kpi, SectionTitle } from '../../components/ui'
 import { bandFor, riskLevelStyle, STRATEGY_ORDER, strategyStyle } from '../../lib/format'
@@ -59,17 +60,17 @@ export function OverviewTab({ report, animate = true }: { report: AssessmentRepo
 
   return (
     <div className="space-y-6">
-      <Card className="relative overflow-hidden border-teal-200/70 bg-linear-to-br from-teal-50/80 via-white to-white">
-        <div className="flex items-start gap-4">
-          <span className="hidden size-11 shrink-0 place-items-center rounded-xl bg-teal-600 text-white shadow-md shadow-teal-600/25 sm:grid">
-            <Stethoscope className="size-5" aria-hidden />
+      <BlueprintFrame className="bg-emerald-50/40" padded={false}>
+        <div className="flex items-start gap-4 p-5 sm:p-6">
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-600/25">
+            <Pill className="size-5" aria-hidden />
           </span>
-          <div>
-            <div className="mb-1 text-xs font-bold uppercase tracking-wider text-teal-700">Prescription</div>
+          <div className="min-w-0">
+            <div className="mb-1 font-display text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">Prescription</div>
             <p className="text-lg font-semibold leading-snug text-slate-900 sm:text-xl">{summary.headline}</p>
           </div>
         </div>
-      </Card>
+      </BlueprintFrame>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <Kpi
@@ -128,25 +129,35 @@ export function OverviewTab({ report, animate = true }: { report: AssessmentRepo
             {topRisks(report).map((r) => {
               const lvl = riskLevelStyle(r.level)
               return (
-                <li key={r.id} className="rounded-xl bg-slate-50 p-4 ring-1 ring-inset ring-slate-200/70">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-slate-400">{r.id}</span>
-                    <span className="font-semibold text-slate-900">{r.title}</span>
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    <Badge className={lvl.badge}>
-                      {lvl.label} · {r.score}
-                    </Badge>
-                    {r.gxp_related && (
-                      <Badge className="bg-violet-50 text-violet-700 ring-violet-200" icon={ShieldCheck}>
-                        GxP
+                <li
+                  key={r.id}
+                  className="relative flex gap-4 overflow-hidden rounded-xl bg-slate-50 p-4 pl-3 ring-1 ring-inset ring-slate-200/70"
+                >
+                  <span
+                    className="shrink-0 self-start font-display text-3xl font-bold leading-none text-slate-300 sm:text-4xl"
+                    aria-hidden
+                  >
+                    {r.id}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-semibold text-slate-900">{r.title}</span>
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <Badge className={lvl.badge}>
+                        {lvl.label} · {r.score}
                       </Badge>
-                    )}
+                      {r.gxp_related && (
+                        <Badge className="bg-violet-50 text-violet-700 ring-violet-200" icon={ShieldCheck}>
+                          GxP
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                      <span className="font-medium text-slate-800">Mitigation: </span>
+                      {r.mitigation}
+                    </p>
                   </div>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                    <span className="font-medium text-slate-800">Mitigation: </span>
-                    {r.mitigation}
-                  </p>
                 </li>
               )
             })}
