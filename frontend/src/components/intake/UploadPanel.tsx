@@ -18,6 +18,7 @@ export interface UploadState {
   extraction: ExtractionResult | null
   source: 'live' | 'cached' | null
   fileName: string | null
+  sampleId: string | null // echoed from the ingest response so demo-mode assess can resolve cached reports
   profileOverride: AppProfile | null // user edits applied on top of extraction.profile
 }
 
@@ -25,6 +26,7 @@ export const EMPTY_UPLOAD: UploadState = {
   extraction: null,
   source: null,
   fileName: null,
+  sampleId: null,
   profileOverride: null,
 }
 
@@ -83,6 +85,7 @@ export function UploadPanel({
         extraction: resp.extraction,
         source: resp.source,
         fileName: file.name,
+        sampleId: resp.sample_id,
         profileOverride: null,
       })
       setEditing(false)
@@ -95,7 +98,13 @@ export function UploadPanel({
             console.warn('[CodeClinic] /api/ingest unreachable - using bundled offline extraction for', file.name)
             didOfflineWarn.current = true
           }
-          onChange({ extraction: synthesized, source: 'cached', fileName: file.name, profileOverride: null })
+          onChange({
+            extraction: synthesized,
+            source: 'cached',
+            fileName: file.name,
+            sampleId: 'labtrack-lims',
+            profileOverride: null,
+          })
           setEditing(false)
           return
         }

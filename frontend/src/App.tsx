@@ -100,7 +100,7 @@ export default function App() {
     const req: AssessRequest = isUpload
       ? {
           profile: upload.profileOverride ?? upload.extraction!.profile,
-          sample_id: null,
+          sample_id: upload.sampleId,
           signals: [],
           target_cloud: intake.cloud,
           mode: 'auto',
