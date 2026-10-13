@@ -2,8 +2,11 @@
 import type {
   AssessmentReport,
   AssessRequest,
+  ChatMessage,
+  ChatSeedsResponse,
   HealthResponse,
   IngestResponse,
+  PortfolioView,
   SampleDetail,
   SampleSummary,
   ScanResult,
@@ -241,4 +244,95 @@ export async function assessStream(req: AssessRequest, { onStage, signal }: Stre
   if (out.error) throw new ApiError('server', out.error)
   if (!out.report) throw new ApiError('stream', 'Stream ended before the report arrived')
   return out.report
+}
+
+// ------------------------------------------------------------------ chat (Ask the Advisor)
+
+export function fetchChatSeeds(reportId: string): Promise<ChatSeedsResponse> {
+  return requestJson<ChatSeedsResponse>(`/api/reports/${encodeURIComponent(reportId)}/chat/seeds`, {
+    signal: withTimeout(8000),
+  })
+}
+
+export interface StreamChatOptions {
+  reportId: string
+  messages: ChatMessage[]
+  onDelta: (text: string) => void
+  onDone?: () => void
+  onError?: (message: string) => void
+  signal?: AbortSignal
+}
+
+/**
+ * POST /api/chat and consume the SSE response, calling onDelta for each `event: delta`.
+ * Resolves when the stream ends; throws ApiError on network/stream failures.
+ */
+export async function streamChat({ reportId, messages, onDelta, onDone, onError, signal }: StreamChatOptions): Promise<void> {
+  const res = await request('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    body: JSON.stringify({ report_id: reportId, messages }),
+    signal,
+  })
+  if (!res.body) throw new ApiError('stream', 'Streaming not supported by this browser')
+
+  let serverError: string | null = null
+  let done = false
+
+  const parser = createSseParser(({ event, data }) => {
+    let payload: unknown
+    try {
+      payload = JSON.parse(data)
+    } catch {
+      return
+    }
+    if (event === 'delta') {
+      const text = (payload as { text?: unknown })?.text
+      if (typeof text === 'string') onDelta(text)
+    } else if (event === 'error') {
+      const msg = (payload as { message?: unknown })?.message
+      serverError = typeof msg === 'string' && msg ? msg : 'The advisor hit an error.'
+    } else if (event === 'done') {
+      done = true
+    }
+  })
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  try {
+    for (;;) {
+      const { value, done: eof } = await reader.read()
+      if (eof) break
+      parser.push(decoder.decode(value, { stream: true }))
+      if (serverError || done) break
+    }
+    parser.push(decoder.decode())
+    parser.flush()
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') throw err
+    throw new ApiError('stream', 'Connection lost while chatting with the advisor')
+  } finally {
+    reader.cancel().catch(() => {})
+  }
+
+  if (serverError) {
+    onError?.(serverError)
+    return
+  }
+  onDone?.()
+}
+
+// ------------------------------------------------------------------ portfolio
+
+export function fetchPortfolioFromSamples(): Promise<PortfolioView> {
+  return requestJson<PortfolioView>('/api/portfolio/samples', { signal: withTimeout(10000) })
+}
+
+export function fetchPortfolio(reportIds: string[]): Promise<PortfolioView> {
+  return requestJson<PortfolioView>('/api/portfolio', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ report_ids: reportIds }),
+    signal: withTimeout(10000),
+  })
 }
