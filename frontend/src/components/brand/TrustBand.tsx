@@ -14,7 +14,7 @@ export function TrustBand({ className }: { className?: string }) {
   return (
     <section className={cx('no-print bg-slate-950 py-10 text-slate-200', className)}>
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-5 px-4 text-center sm:px-6 lg:px-8">
-        <span className="annotation !text-emerald-400">Compliance-aware</span>
+        <span className="annotation" style={{ color: 'var(--color-emerald-400)' }}>Compliance-aware</span>
         <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
           {FRAMEWORKS.map((f, i) => (
             <li key={f} className="flex items-center gap-6">
