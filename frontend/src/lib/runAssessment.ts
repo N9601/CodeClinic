@@ -19,10 +19,18 @@ export interface RunCallbacks {
   signal: AbortSignal
 }
 
-export const STAGE_ORDER: StageName[] = ['scan', 'analyze', 'assess', 'recommend', 'assemble']
+export const STAGE_ORDER: StageName[] = ['scan', 'analyze', 'extract', 'assess', 'recommend', 'assemble']
 
-/** assess and recommend run in parallel, so they share a rank. */
-export const STAGE_RANK: Record<StageName, number> = { scan: 0, analyze: 1, assess: 2, recommend: 2, assemble: 3 }
+/** assess and recommend run in parallel, so they share a rank.
+ *  analyze and extract are mutually exclusive, so they share a rank too. */
+export const STAGE_RANK: Record<StageName, number> = {
+  scan: 0,
+  analyze: 1,
+  extract: 1,
+  assess: 2,
+  recommend: 2,
+  assemble: 3,
+}
 
 function isAbort(err: unknown) {
   return err instanceof DOMException && err.name === 'AbortError'
@@ -50,10 +58,11 @@ const sleep = (ms: number, signal: AbortSignal) =>
   })
 
 /** Replays the stage checklist quickly so the offline demo still tells the story. */
-async function replayStages(cb: RunCallbacks) {
+async function replayStages(cb: RunCallbacks, hasExtraction = false) {
   const step = 380
   const ev = (stage: StageName, status: 'started' | 'done') => cb.onStage({ stage, status, label: '' })
-  for (const s of ['scan', 'analyze'] as StageName[]) {
+  const first: StageName[] = hasExtraction ? ['scan', 'extract'] : ['scan', 'analyze']
+  for (const s of first) {
     ev(s, 'started')
     await sleep(step, cb.signal)
     ev(s, 'done')
@@ -93,7 +102,12 @@ export async function runAssessment(req: AssessRequest, cb: RunCallbacks): Promi
   cb.onNotice('Live progress unavailable - waiting for the complete report...')
   try {
     const report = await assess(req, cb.signal)
-    for (const s of STAGE_ORDER) cb.onStage({ stage: s, status: 'done', label: '' })
+    for (const s of STAGE_ORDER) {
+      // Only one of analyze/extract applies per run.
+      if (s === 'analyze' && req.extraction) continue
+      if (s === 'extract' && !req.extraction) continue
+      cb.onStage({ stage: s, status: 'done', label: '' })
+    }
     cb.onNotice(null)
     return { report, source: 'post' }
   } catch (err) {
@@ -101,7 +115,7 @@ export async function runAssessment(req: AssessRequest, cb: RunCallbacks): Promi
     // 3. bundled report for the LabTrack sample
     if (req.sample_id === MOCK_REPORT_SAMPLE_ID) {
       cb.onNotice('Backend unreachable - replaying the bundled LabTrack LIMS report (offline demo).')
-      await replayStages(cb)
+      await replayStages(cb, Boolean(req.extraction))
       return { report: MOCK_REPORT, source: 'mock' }
     }
     throw friendly(err)

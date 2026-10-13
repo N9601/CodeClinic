@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, CircleX, Cloud, FileSearch, Network, Package, Route, ShieldAlert, Timer } from 'lucide-react'
+import { ArrowLeft, Check, CircleX, Cloud, FileSearch, FileText, Network, Package, Route, ShieldAlert, Timer } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button, Card, cx, Spinner } from '../components/ui'
@@ -11,6 +11,7 @@ export type StageMap = Record<StageName, StageStatusUI>
 export const INITIAL_STAGES: StageMap = {
   scan: 'pending',
   analyze: 'pending',
+  extract: 'pending',
   assess: 'pending',
   recommend: 'pending',
   assemble: 'pending',
@@ -19,6 +20,12 @@ export const INITIAL_STAGES: StageMap = {
 const STAGES: Array<{ key: StageName; title: string; detail: string; icon: LucideIcon }> = [
   { key: 'scan', title: 'Scanning artifacts', detail: 'Intake profile and code evidence', icon: FileSearch },
   { key: 'analyze', title: 'Analyzing architecture', detail: 'Components, integrations, tech inventory, debt', icon: Network },
+  {
+    key: 'extract',
+    title: 'Extracting from document',
+    detail: 'Profile and architecture read from the uploaded report',
+    icon: FileText,
+  },
   {
     key: 'assess',
     title: 'Assessing readiness & risks',
@@ -59,6 +66,7 @@ export function Running({
   error,
   notice,
   onBack,
+  hasExtraction = false,
 }: {
   appName: string
   cloud: CloudProvider
@@ -68,9 +76,11 @@ export function Running({
   error: string | null
   notice: string | null
   onBack: () => void
+  hasExtraction?: boolean
 }) {
   const elapsed = useElapsed(startedAt, !error)
-  const doneCount = STAGES.filter((s) => stages[s.key] === 'done').length
+  const visibleStages = STAGES.filter((s) => (hasExtraction ? s.key !== 'analyze' : s.key !== 'extract'))
+  const doneCount = visibleStages.filter((s) => stages[s.key] === 'done').length
   const parallel = stages.assess === 'started' && stages.recommend === 'started'
 
   return (
@@ -96,11 +106,11 @@ export function Running({
         <div className="h-1.5 bg-slate-100">
           <div
             className={cx('h-full transition-all duration-500', error ? 'bg-red-400' : 'bg-linear-to-r from-teal-500 to-emerald-500')}
-            style={{ width: `${Math.max(4, (doneCount / STAGES.length) * 100)}%` }}
+            style={{ width: `${Math.max(4, (doneCount / visibleStages.length) * 100)}%` }}
           />
         </div>
         <ol className="divide-y divide-slate-100">
-          {STAGES.map((s, i) => {
+          {visibleStages.map((s, i) => {
             const status = stages[s.key]
             const Icon = s.icon
             const label = labels[s.key]
