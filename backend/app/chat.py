@@ -305,10 +305,21 @@ async def _stream_demo(report: AssessmentReport, messages: list[ChatMessage]) ->
         yield word + " "
 
 
+# Fallback chain of Gemini models. A single 503 UNAVAILABLE on one model
+# tries the next before we drop to scripted - Google's -latest aliases are
+# often throttled during peak hours, while the Lite variants stay up.
+GEMINI_MODEL_CHAIN = [
+    "gemini-flash-lite-latest",
+    "gemini-2.5-flash",
+    "gemini-flash-latest",
+    "gemini-3.1-flash-lite",
+]
+
+
 async def _stream_gemini(report: AssessmentReport, messages: list[ChatMessage]) -> AsyncIterator[str]:
-    """Stream from Gemini 2.5 Flash. Raises on error; caller falls back."""
+    """Stream from Gemini. If the first model returns 503 before any token is
+    emitted, try the next one. Raises on hard failure so caller falls back."""
     client = google_genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-    # Gemini uses one `system_instruction` field (text) and `contents` for the dialogue.
     system_text = (
         prompts.system_prompt() + "\n\n" + CHAT_SYSTEM + "\n\n"
         + f"<report id={report.id!r}>\n{_report_block(report)}\n</report>"
@@ -317,19 +328,36 @@ async def _stream_gemini(report: AssessmentReport, messages: list[ChatMessage]) 
     for m in messages:
         role = "user" if m.role == "user" else "model"
         contents.append({"role": role, "parts": [{"text": m.content}]})
-    stream = await client.aio.models.generate_content_stream(
-        model=os.getenv("CODECLINIC_GEMINI_MODEL", "gemini-2.5-flash"),
-        contents=contents,
-        config={
-            "system_instruction": system_text,
-            "max_output_tokens": MAX_CHAT_TOKENS,
-            "temperature": 0.3,
-        },
-    )
-    async for chunk in stream:
-        text = getattr(chunk, "text", None)
-        if text:
-            yield text
+
+    override = os.getenv("CODECLINIC_GEMINI_MODEL")
+    models = [override] if override else GEMINI_MODEL_CHAIN
+    last_err: Exception | None = None
+    for model in models:
+        try:
+            stream = await client.aio.models.generate_content_stream(
+                model=model,
+                contents=contents,
+                config={
+                    "system_instruction": system_text,
+                    "max_output_tokens": MAX_CHAT_TOKENS,
+                    "temperature": 0.3,
+                },
+            )
+            emitted_any = False
+            async for chunk in stream:
+                text = getattr(chunk, "text", None)
+                if text:
+                    emitted_any = True
+                    yield text
+            if emitted_any:
+                return
+            # Model opened a stream but sent nothing - try the next model
+            last_err = RuntimeError(f"{model} returned no content")
+        except Exception as exc:
+            last_err = exc
+            continue
+    if last_err is not None:
+        raise last_err
 
 
 async def _stream_claude(report: AssessmentReport, messages: list[ChatMessage]) -> AsyncIterator[str]:
