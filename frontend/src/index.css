@@ -131,3 +131,39 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Chat markdown bubbles — lightweight typography without the Tailwind plugin. */
+.cc-chat-md > :first-child { margin-top: 0; }
+.cc-chat-md > :last-child { margin-bottom: 0; }
+.cc-chat-md p { margin: 0.5rem 0; line-height: 1.55; }
+.cc-chat-md ul, .cc-chat-md ol { margin: 0.5rem 0; padding-left: 1.25rem; }
+.cc-chat-md ul { list-style: disc; }
+.cc-chat-md ol { list-style: decimal; }
+.cc-chat-md li { margin: 0.2rem 0; }
+.cc-chat-md h1, .cc-chat-md h2, .cc-chat-md h3, .cc-chat-md h4 {
+  font-weight: 700; margin: 0.65rem 0 0.3rem;
+  color: #0f172a;
+}
+.cc-chat-md h1 { font-size: 1rem; }
+.cc-chat-md h2 { font-size: 0.95rem; }
+.cc-chat-md h3, .cc-chat-md h4 { font-size: 0.875rem; }
+.cc-chat-md code {
+  background: #f1f5f9; padding: 0.08rem 0.3rem;
+  border-radius: 0.25rem; font-size: 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.cc-chat-md pre {
+  background: #0f172a; color: #e2e8f0;
+  padding: 0.6rem 0.75rem; border-radius: 0.5rem;
+  overflow-x: auto; font-size: 0.75rem; margin: 0.5rem 0;
+}
+.cc-chat-md pre code { background: transparent; padding: 0; color: inherit; font-size: 0.75rem; }
+.cc-chat-md blockquote {
+  border-left: 3px solid #10b981; padding: 0.1rem 0.75rem;
+  color: #475569; margin: 0.5rem 0; font-style: italic;
+}
+.cc-chat-md a { color: #0f766e; text-decoration: underline; }
+.cc-chat-md table { border-collapse: collapse; margin: 0.5rem 0; font-size: 0.8rem; }
+.cc-chat-md th, .cc-chat-md td { border: 1px solid #e2e8f0; padding: 0.3rem 0.5rem; text-align: left; }
+.cc-chat-md th { background: #f8fafc; font-weight: 600; }
+.cc-chat-md hr { border: 0; border-top: 1px solid #e2e8f0; margin: 0.75rem 0; }
