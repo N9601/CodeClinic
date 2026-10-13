@@ -1,7 +1,6 @@
 // Objective 6 - regulatory gap analysis.
 import { AlertTriangle, ClipboardCheck, ListChecks, ShieldCheck } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Annotation } from '../../components/brand/Annotation'
 import { BlueprintFrame } from '../../components/brand/BlueprintFrame'
 import { SectionHeader } from '../../components/brand/SectionHeader'
 import { Badge, Card, cx, Kpi } from '../../components/ui'
@@ -13,11 +12,22 @@ const POSTURE_STYLE: Record<CompliancePosture, { label: string; className: strin
   elevated_risk: { label: 'Elevated risk', className: 'bg-red-50 text-red-700 ring-red-200' },
 }
 
-const SEVERITY_STYLE: Record<ComplianceSeverity, { label: string; className: string; rank: number }> = {
-  critical: { label: 'Critical', className: 'bg-red-50 text-red-700 ring-red-200', rank: 0 },
-  major: { label: 'Major', className: 'bg-amber-50 text-amber-800 ring-amber-200', rank: 1 },
-  minor: { label: 'Minor', className: 'bg-slate-100 text-slate-800 ring-slate-200', rank: 2 },
+const SEVERITY_STYLE: Record<ComplianceSeverity, { label: string; className: string; rank: number; accent: string; dot: string }> = {
+  critical: { label: 'Critical', className: 'bg-red-50 text-red-700 ring-red-200', rank: 0, accent: 'bg-rose-500', dot: 'bg-rose-500' },
+  major: { label: 'Major', className: 'bg-amber-50 text-amber-800 ring-amber-200', rank: 1, accent: 'bg-amber-500', dot: 'bg-amber-500' },
+  minor: { label: 'Minor', className: 'bg-slate-100 text-slate-800 ring-slate-200', rank: 2, accent: 'bg-slate-400', dot: 'bg-slate-400' },
 }
+
+const POSTURE_DOT: Record<CompliancePosture, string> = {
+  low_risk: 'bg-emerald-500',
+  manageable: 'bg-amber-500',
+  elevated_risk: 'bg-rose-500',
+}
+
+const CHIP_CLASS =
+  'inline-flex items-center rounded-md border border-emerald-200 bg-white px-2 py-0.5 font-display tracking-wide text-xs text-emerald-700 transition-colors hover:bg-emerald-50'
+
+const EYEBROW_CLASS = 'text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500'
 
 function sortedGaps(gaps: ComplianceGap[]): ComplianceGap[] {
   return [...gaps].sort((a, b) => SEVERITY_STYLE[a.severity].rank - SEVERITY_STYLE[b.severity].rank)
@@ -59,9 +69,16 @@ export function ComplianceTab({ report }: { report: AssessmentReport }) {
       />
 
       <div className="flex flex-wrap items-center gap-3">
-        <Badge className={cx('px-3 py-1 text-sm', posture.className)} icon={ShieldCheck}>
-          Posture: {posture.label}
-        </Badge>
+        <span
+          className={cx(
+            'inline-flex items-center gap-2 rounded-full px-4 py-1.5 font-display text-base uppercase tracking-[0.14em] ring-1 ring-inset',
+            posture.className,
+          )}
+        >
+          <span className={cx('inline-block size-2 rounded-full', POSTURE_DOT[compliance.overall_posture])} aria-hidden />
+          <ShieldCheck className="size-4" aria-hidden />
+          Posture · {posture.label}
+        </span>
         <span className="text-xs text-slate-500">Based on {compliance.gaps.length} gap(s) across {frameworks.length} framework(s)</span>
       </div>
 
@@ -105,7 +122,11 @@ export function ComplianceTab({ report }: { report: AssessmentReport }) {
                     .map((id) => ({ id, comp: componentLookup.get(id) }))
                     .filter((c) => c.comp)
                   return (
-                    <Card key={gap.id}>
+                    <Card key={gap.id} className="relative overflow-hidden pl-5">
+                      <span
+                        aria-hidden
+                        className={cx('absolute inset-y-0 left-0 w-[3px] rounded-l-md', sev.accent)}
+                      />
                       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
                         <h3 className="min-w-0 text-base font-semibold leading-tight text-slate-900">{gap.title}</h3>
                         <div className="flex shrink-0 flex-wrap gap-2">
@@ -122,7 +143,7 @@ export function ComplianceTab({ report }: { report: AssessmentReport }) {
                       {gap.clauses.length > 0 && (
                         <div className="mt-3 flex flex-wrap gap-1.5">
                           {gap.clauses.map((c, i) => (
-                            <Annotation key={i}>[ {c} ]</Annotation>
+                            <span key={i} className={CHIP_CLASS}>{c}</span>
                           ))}
                         </div>
                       )}
@@ -130,37 +151,42 @@ export function ComplianceTab({ report }: { report: AssessmentReport }) {
                       {(linkedRisks.length > 0 || linkedComponents.length > 0) && (
                         <div className="mt-3 space-y-2">
                           {linkedRisks.length > 0 && (
-                            <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                              <span className="font-semibold uppercase tracking-wide text-slate-500">Linked risks:</span>
-                              {linkedRisks.map(({ id, risk }) => (
-                                <Badge key={id} className="bg-red-50 text-red-700 ring-red-200">
-                                  {id} · {risk?.title}
-                                </Badge>
-                              ))}
+                            <div>
+                              <div className={EYEBROW_CLASS}>Linked risks</div>
+                              <div className="mt-1 flex flex-wrap gap-1.5 text-xs">
+                                {linkedRisks.map(({ id, risk }) => (
+                                  <Badge key={id} className="bg-red-50 text-red-700 ring-red-200">
+                                    {id} · {risk?.title}
+                                  </Badge>
+                                ))}
+                              </div>
                             </div>
                           )}
                           {linkedComponents.length > 0 && (
-                            <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                              <span className="font-semibold uppercase tracking-wide text-slate-500">Linked components:</span>
-                              {linkedComponents.map(({ id, comp }) => (
-                                <Badge key={id} className="bg-sky-50 text-sky-700 ring-sky-200">
-                                  {comp?.name ?? id}
-                                </Badge>
-                              ))}
+                            <div>
+                              <div className={EYEBROW_CLASS}>Linked components</div>
+                              <div className="mt-1 flex flex-wrap gap-1.5 text-xs">
+                                {linkedComponents.map(({ id, comp }) => (
+                                  <Badge key={id} className="bg-sky-50 text-sky-700 ring-sky-200">
+                                    {comp?.name ?? id}
+                                  </Badge>
+                                ))}
+                              </div>
                             </div>
                           )}
                         </div>
                       )}
 
-                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      <div className="mt-4 grid gap-3 md:grid-cols-[1fr_minmax(0,0.9fr)]">
                         <div className="rounded-xl bg-slate-50 p-3 ring-1 ring-inset ring-slate-200/70">
                           <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                             Mitigation
                           </div>
                           <p className="text-sm leading-relaxed text-slate-800">{gap.mitigation}</p>
                         </div>
-                        <div className="rounded-xl bg-emerald-50/60 p-3 ring-1 ring-inset ring-emerald-200/70">
-                          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-700">
+                        <div className="rounded-xl bg-emerald-50/70 p-3 ring-1 ring-inset ring-emerald-200/70">
+                          <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-700">
+                            <ShieldCheck className="size-3.5" aria-hidden />
                             Validation activity
                           </div>
                           <p className="text-sm leading-relaxed text-slate-800">{gap.validation_activity}</p>
@@ -182,13 +208,13 @@ export function ComplianceTab({ report }: { report: AssessmentReport }) {
             ) : (
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {visibleControls.map((ctl, i) => (
-                  <Card key={i}>
+                  <Card key={i} className="flex flex-col">
                     <h4 className="text-sm font-semibold text-slate-900">{ctl.name}</h4>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-800">{ctl.description}</p>
+                    <p className="mt-1 flex-1 text-sm leading-relaxed text-slate-800">{ctl.description}</p>
                     {ctl.clauses.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
+                      <div className="mt-3 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
                         {ctl.clauses.map((c, j) => (
-                          <Annotation key={j}>[ {c} ]</Annotation>
+                          <span key={j} className={CHIP_CLASS}>{c}</span>
                         ))}
                       </div>
                     )}
