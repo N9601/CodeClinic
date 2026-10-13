@@ -1,0 +1,178 @@
+# Clause-level regulation reference used by the Compliance Gap Analyzer to cite
+# WHERE in each framework a modernization risk or control applies. Keep clauses
+# short - CodeClinic quotes the id + a one-line summary; full text lives in the
+# cited standards. Verified against public standards as of 2026-10.
+
+clauses:
+
+  # ----- 21 CFR Part 11 (US FDA electronic records / signatures) -----
+  - id: 21 CFR 11.10(a)
+    framework: 21 CFR Part 11
+    topic: System validation
+    summary: Validation of systems to ensure accuracy, reliability, consistent intended performance and the ability to discern invalid or altered records.
+    applies_to: [validation, csa, iq_oq_pq, data_integrity]
+  - id: 21 CFR 11.10(b)
+    framework: 21 CFR Part 11
+    topic: Record generation
+    summary: Ability to generate accurate, complete copies of records in human-readable and electronic form suitable for inspection, review and copying.
+    applies_to: [data_migration, archival, inspection_readiness]
+  - id: 21 CFR 11.10(c)
+    framework: 21 CFR Part 11
+    topic: Record retention
+    summary: Protection of records to enable accurate, ready retrieval throughout the records retention period.
+    applies_to: [backup, archival, retention, data_migration]
+  - id: 21 CFR 11.10(d)
+    framework: 21 CFR Part 11
+    topic: Access controls
+    summary: Limiting system access to authorised individuals.
+    applies_to: [identity, iam, mfa, access_control]
+  - id: 21 CFR 11.10(e)
+    framework: 21 CFR Part 11
+    topic: Audit trail
+    summary: Secure, computer-generated, time-stamped audit trails to independently record the date and time of operator entries and actions that create, modify or delete electronic records.
+    applies_to: [audit_trail, data_integrity, change_control]
+  - id: 21 CFR 11.10(g)
+    framework: 21 CFR Part 11
+    topic: Authority checks
+    summary: Use of authority checks to ensure only authorised individuals can use the system, electronically sign records or alter records.
+    applies_to: [identity, e_signature, access_control]
+  - id: 21 CFR 11.50
+    framework: 21 CFR Part 11
+    topic: Signature manifestation
+    summary: Signed electronic records must contain the printed name of the signer, date/time of signing and the meaning of the signature.
+    applies_to: [e_signature, record_linking]
+  - id: 21 CFR 11.70
+    framework: 21 CFR Part 11
+    topic: Signature-record linking
+    summary: Electronic signatures must be linked to their respective electronic records to ensure they cannot be excised, copied or otherwise transferred.
+    applies_to: [e_signature, data_migration]
+  - id: 21 CFR 11.200
+    framework: 21 CFR Part 11
+    topic: Electronic signature components
+    summary: Non-biometric electronic signatures employ at least two distinct identification components (e.g. user id + password), with controls to prevent misuse.
+    applies_to: [e_signature, mfa, authentication]
+  - id: 21 CFR 11.300
+    framework: 21 CFR Part 11
+    topic: Controls for identification codes/passwords
+    summary: Controls to maintain the uniqueness and integrity of identification codes and passwords, including periodic revision.
+    applies_to: [identity, password_policy]
+
+  # ----- EU GMP Annex 11 (computerised systems) -----
+  - id: Annex 11 §3
+    framework: EU GMP Annex 11
+    topic: Suppliers and service providers
+    summary: Formal agreements with third parties (incl. cloud); supplier assessment based on risk; competence demonstrated.
+    applies_to: [supplier_qualification, cloud_vendor, saas]
+  - id: Annex 11 §4
+    framework: EU GMP Annex 11
+    topic: Validation
+    summary: Risk-based validation documentation and activities for the full computerised system life cycle, including change control and periodic review.
+    applies_to: [validation, change_control, csa, periodic_review]
+  - id: Annex 11 §4.8
+    framework: EU GMP Annex 11
+    topic: Data migration
+    summary: Data migration should be checked for the integrity of the data in the new system; migration documented and verified.
+    applies_to: [data_migration, data_integrity]
+  - id: Annex 11 §7
+    framework: EU GMP Annex 11
+    topic: Data storage
+    summary: Data must be secured against damage by physical and electronic means; stored data checked for accessibility, readability and accuracy.
+    applies_to: [backup, archival, data_integrity]
+  - id: Annex 11 §9
+    framework: EU GMP Annex 11
+    topic: Audit trails
+    summary: Consideration to include system-generated time-stamped audit trails for GMP-relevant changes/deletions; reviewed as part of record review.
+    applies_to: [audit_trail, data_integrity]
+  - id: Annex 11 §10
+    framework: EU GMP Annex 11
+    topic: Change and configuration management
+    summary: Any changes to a computerised system should be made in a controlled manner in accordance with a defined procedure.
+    applies_to: [change_control, cicd, iac]
+  - id: Annex 11 §12
+    framework: EU GMP Annex 11
+    topic: Security
+    summary: Physical and/or logical controls restrict access; manage identity, authentication and privilege.
+    applies_to: [identity, access_control, mfa, network]
+  - id: Annex 11 §16
+    framework: EU GMP Annex 11
+    topic: Business continuity
+    summary: Provisions should be in place to ensure continuity of support for critical processes in the event of a system breakdown.
+    applies_to: [disaster_recovery, backup, rpo_rto]
+  - id: Annex 11 §17
+    framework: EU GMP Annex 11
+    topic: Archiving
+    summary: Data may be archived; archived data should be checked for accessibility, readability and integrity.
+    applies_to: [archival, retention, data_migration]
+
+  # ----- GAMP 5 (ISPE, 2nd edition) -----
+  - id: GAMP 5 §4
+    framework: GAMP 5
+    topic: Life cycle approach
+    summary: Scaled life-cycle activities based on risk, novelty and complexity; leverage supplier involvement where appropriate.
+    applies_to: [validation, csa, supplier_qualification]
+  - id: GAMP 5 §5
+    framework: GAMP 5
+    topic: Quality risk management
+    summary: Risk-based decisions on specifications, testing, and ongoing controls across the system life cycle.
+    applies_to: [risk_management, validation, csa]
+  - id: GAMP 5 §D4
+    framework: GAMP 5
+    topic: Software categories
+    summary: Software is categorised 1-5; validation effort scales with category (Cat 1 infrastructure, Cat 3 non-configured, Cat 4 configured, Cat 5 custom).
+    applies_to: [validation, csa, cloud_vendor]
+  - id: GAMP 5 §M11
+    framework: GAMP 5
+    topic: IT infrastructure
+    summary: Infrastructure (OS, databases, networks, cloud) treated as qualified components; qualification activities documented.
+    applies_to: [iq, infrastructure, cloud_vendor, iac]
+  - id: GAMP 5 Appendix D5
+    framework: GAMP 5
+    topic: Testing
+    summary: Testing commensurate with risk, including unscripted/exploratory testing; automated test evidence acceptable.
+    applies_to: [oq, csa, test_automation]
+  - id: GAMP 5 Appendix M4
+    framework: GAMP 5
+    topic: Categorisation of cloud/SaaS
+    summary: Cloud and SaaS services treated with risk-based supplier assessment; shared responsibility documented.
+    applies_to: [cloud_vendor, saas, supplier_qualification]
+
+  # ----- FDA Computer Software Assurance (CSA) draft guidance -----
+  - id: FDA CSA §IV.A
+    framework: FDA CSA guidance
+    topic: Risk-based assurance
+    summary: Determine assurance activities based on intended use and risk; critical thinking replaces default scripted testing.
+    applies_to: [csa, risk_management, validation]
+  - id: FDA CSA §IV.B
+    framework: FDA CSA guidance
+    topic: Assurance activities
+    summary: Mix of unscripted, scripted/limited, and robust scripted testing; evidence from tool-generated records acceptable.
+    applies_to: [csa, oq, test_automation]
+
+  # ----- ALCOA+ data integrity -----
+  - id: ALCOA+
+    framework: Data Integrity (ALCOA+)
+    topic: Data integrity principles
+    summary: Records must be Attributable, Legible, Contemporaneous, Original, Accurate, plus Complete, Consistent, Enduring and Available throughout the retention period.
+    applies_to: [data_integrity, audit_trail, instrument_data, archival]
+
+  # ----- GDPR / local data residency -----
+  - id: GDPR Art. 5(1)(f)
+    framework: GDPR
+    topic: Integrity and confidentiality
+    summary: Personal data processed with appropriate security against unauthorised processing, loss, destruction or damage.
+    applies_to: [identity, encryption, access_control]
+  - id: GDPR Art. 32
+    framework: GDPR
+    topic: Security of processing
+    summary: Risk-appropriate technical and organisational measures - encryption, confidentiality, integrity, resilience, restore capability.
+    applies_to: [encryption, backup, disaster_recovery, mfa]
+  - id: GDPR Art. 44
+    framework: GDPR
+    topic: Transfers to third countries
+    summary: Transfers of personal data outside the EU/EEA require an adequate basis (adequacy decision, SCCs, BCRs) and risk assessment.
+    applies_to: [data_residency, cloud_region, cross_border]
+  - id: HIPAA §164.312
+    framework: HIPAA
+    topic: Technical safeguards
+    summary: Access controls, audit controls, integrity, person/entity authentication, transmission security for ePHI.
+    applies_to: [identity, audit_trail, encryption, mfa]
