@@ -71,9 +71,10 @@ def _priority(report: AssessmentReport) -> float:
 
 
 def _wave_for(index: int, total: int) -> str:
-    """Three roughly equal buckets, with the first being the smallest (focused Wave 1)."""
-    now_cutoff = max(1, total // 3)
-    next_cutoff = max(now_cutoff + 1, (total * 2) // 3 + 1)
+    """Three roughly equal buckets using ceiling division, so a 3-app portfolio
+    splits 1/1/1 and a 6-app portfolio splits 2/2/2."""
+    now_cutoff = (total + 2) // 3           # ceil(total / 3)
+    next_cutoff = (2 * total + 2) // 3      # ceil(2*total / 3)
     if index < now_cutoff:
         return "now"
     if index < next_cutoff:
