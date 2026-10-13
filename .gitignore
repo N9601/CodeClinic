@@ -17,3 +17,6 @@ backend/data/reports/*.json
 Thumbs.db
 .vscode/
 .idea/
+
+# Rendered sample input report PDFs
+backend/samples/input-reports/*.pdf
