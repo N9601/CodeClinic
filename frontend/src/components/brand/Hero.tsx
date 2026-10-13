@@ -25,6 +25,18 @@ export function Hero({
           maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 75%)',
         }}
       />
+      {/* paper-grain texture: tiny ink dots scattered across the hero */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            'radial-gradient(rgba(15,23,42,0.05) 1px, transparent 1px), radial-gradient(rgba(15,23,42,0.04) 1px, transparent 1px)',
+          backgroundSize: '7px 7px, 11px 11px',
+          backgroundPosition: '0 0, 3px 4px',
+          opacity: 0.5,
+        }}
+      />
 
       <div className="relative mx-auto max-w-7xl px-4 pt-10 pb-14 text-center sm:px-6 sm:pt-14 lg:px-8">
         {/* Pill tag */}
@@ -34,7 +46,7 @@ export function Hero({
         </div>
 
         {/* Headline */}
-        <h1 className="mx-auto max-w-5xl font-display text-5xl font-bold uppercase leading-[0.9] tracking-tight text-slate-900 md:text-7xl lg:text-8xl">
+        <h1 className="mx-auto max-w-5xl font-display text-5xl font-bold uppercase leading-[0.9] tracking-[-0.03em] text-slate-900 md:text-7xl lg:text-8xl">
           Diagnose Legacy Pharma Apps.
           <span className="block text-emerald-600">Prescribe a Compliant Migration Plan.</span>
         </h1>
@@ -47,10 +59,10 @@ export function Hero({
 
         {/* CTAs */}
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button variant="primary" icon={FlaskConical} onClick={onTrySample} className="px-6 py-3 text-base">
+          <Button variant="primary" icon={FlaskConical} onClick={onTrySample} className="px-6 py-3 text-base shadow-md shadow-emerald-600/20 transition-transform hover:scale-[1.02] hover:shadow-lg hover:shadow-emerald-600/30">
             Try with LabTrack sample
           </Button>
-          <Button variant="secondary" icon={Upload} onClick={onUpload} className="px-6 py-3 text-base">
+          <Button variant="secondary" icon={Upload} onClick={onUpload} className="px-6 py-3 text-base transition-transform hover:scale-[1.02] hover:shadow-md">
             Upload assessment
           </Button>
         </div>
@@ -67,6 +79,42 @@ export function Hero({
         </div>
       </div>
     </section>
+  )
+}
+
+// Hand-drawn connector between pipeline nodes — wobbly stroke + rough arrowhead.
+function SketchArrow() {
+  return (
+    <>
+      {/* vertical (mobile) */}
+      <svg
+        aria-hidden
+        viewBox="0 0 12 28"
+        className="mx-auto block h-7 w-3 text-emerald-500 md:hidden"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M6 2 C 5.4 7, 6.6 13, 5.8 22" />
+        <path d="M2.6 19 L 5.9 24.6 L 9.2 19.4" />
+      </svg>
+      {/* horizontal (desktop) */}
+      <svg
+        aria-hidden
+        viewBox="0 0 48 14"
+        className="mx-2 hidden h-3.5 w-12 text-emerald-500 md:block"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M2 7.2 C 10 6.3, 22 7.9, 42 6.6" />
+        <path d="M37.2 2.8 L 43.4 6.7 L 37.6 10.9" />
+      </svg>
+    </>
   )
 }
 
@@ -91,12 +139,7 @@ function PipelineDiagram() {
               {n.label}
             </span>
           </div>
-          {i < nodes.length - 1 && (
-            <span
-              aria-hidden
-              className="mx-auto h-5 w-px border-l border-dashed border-emerald-400/70 md:mx-3 md:h-px md:w-10 md:border-l-0 md:border-t"
-            />
-          )}
+          {i < nodes.length - 1 && <SketchArrow />}
         </Fragment>
       ))}
     </div>
