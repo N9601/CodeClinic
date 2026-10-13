@@ -22,7 +22,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import PlainTextResponse, StreamingResponse  # noqa: E402
 
-from . import pipeline, render  # noqa: E402
+from . import chat, pipeline, render  # noqa: E402
 from .scanner import scan_zip  # noqa: E402
 from .schemas import AppProfile, AssessmentReport, AssessRequest, ScanResult  # noqa: E402
 
@@ -319,6 +319,30 @@ async def assess_stream(request: AssessRequest) -> StreamingResponse:
 @app.get("/api/reports/{report_id}")
 def get_report(report_id: str) -> AssessmentReport:
     return _load_report(report_id)
+
+
+@app.get("/api/reports/{report_id}/chat/seeds")
+def chat_seeds(report_id: str) -> chat.ChatSeedResponse:
+    return chat.seed_questions(_load_report(report_id))
+
+
+@app.post("/api/chat")
+async def chat_endpoint(request: chat.ChatRequest) -> StreamingResponse:
+    report = _load_report(request.report_id)
+
+    async def events():
+        try:
+            async for delta in chat.stream_reply(report, request.messages):
+                yield f"event: delta\ndata: {json.dumps({'text': delta})}\n\n"
+        except Exception as exc:  # last-resort guard
+            yield f"event: error\ndata: {json.dumps({'message': str(exc)})}\n\n"
+        yield "event: done\ndata: {}\n\n"
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.get("/api/reports/{report_id}/markdown")
