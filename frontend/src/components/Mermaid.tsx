@@ -1,7 +1,7 @@
 // Renders Mermaid source (flowcharts, gantt) supplied by the backend.
 // Never throws: on failure it shows a small error box and the raw source.
 import mermaid from 'mermaid'
-import { AlertTriangle, Maximize2, X } from 'lucide-react'
+import { Maximize2, TriangleAlert, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { cx, Spinner } from './ui'
 
@@ -93,7 +93,7 @@ export function Mermaid({
     return (
       <div className={cx('rounded-xl border border-amber-200 bg-amber-50/60 p-4', className)}>
         <div className="mb-2 flex items-center gap-2 text-sm font-medium text-amber-800">
-          <AlertTriangle className="size-4" aria-hidden />
+          <TriangleAlert className="size-4" aria-hidden />
           Could not render {label.toLowerCase()} - showing the source instead.
         </div>
         <p className="mb-2 line-clamp-2 text-xs text-amber-700/80">{state.message}</p>
@@ -106,7 +106,10 @@ export function Mermaid({
 
   if (state.status === 'loading') {
     return (
-      <div className={cx('grid min-h-48 place-items-center rounded-xl bg-slate-50 text-sm text-slate-500', className)}>
+      <div
+        data-mermaid-loading
+        className={cx('grid min-h-48 place-items-center rounded-xl bg-slate-50 text-sm text-slate-500', className)}
+      >
         <div className="flex items-center gap-2">
           <Spinner className="size-4 text-teal-600" /> Rendering {label.toLowerCase()}...
         </div>
