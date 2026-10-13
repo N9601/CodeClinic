@@ -1,6 +1,6 @@
 {
   "id": "sample-trialhub-ctms",
-  "generated_at": "2026-10-13 05:33 UTC",
+  "generated_at": "2026-10-13 06:23 UTC",
   "mode": "cached",
   "model": "claude-opus-5-5",
   "target_cloud": "aws",
@@ -827,5 +827,252 @@
     "current": "flowchart LR\n  n_web_ui([\"<b>TrialHub UI</b><br/><small>JSF 1.2 + RichFaces</small>\"])\n  class n_web_ui t_frontend\n  n_core_app[\"<b>TrialHub Core (EAR)</b><br/><small>Java 7, EJB 3.0, Hibernate 3 on WebLogic 10.3.6</small>\"]\n  class n_core_app t_backend\n  n_oracle_db[(\"<b>TrialHub Database</b><br/><small>Oracle Database 11g R2 Enterprise (~1.2 TB)</small>\")]\n  class n_oracle_db t_database\n  n_safety_etl[\"<b>Safety Data ETL</b><br/><small>Quartz jobs inside the EAR</small>\"]\n  class n_safety_etl t_batch\n  n_edc{{\"<b>EDC System</b><br/><small>Vendor EDC (SOAP web services)</small>\"}}\n  class n_edc t_external\n  n_irt{{\"<b>IRT / Randomisation Vendor</b><br/><small>SFTP file exchange</small>\"}}\n  class n_irt t_external\n  n_safety_db{{\"<b>Safety Database</b><br/><small>Pharmacovigilance system</small>\"}}\n  class n_safety_db t_external\n  n_sharepoint_tmf{{\"<b>SharePoint TMF</b><br/><small>SharePoint document libraries</small>\"}}\n  class n_sharepoint_tmf t_external\n  n_ldap[\"<b>Corporate LDAP</b><br/><small>LDAP authentication</small>\"]\n  class n_ldap t_identity\n  n_web_ui -->|JSF postbacks| n_core_app\n  n_core_app -->|JDBC + PL/SQL| n_oracle_db\n  n_edc -->|SOAP web services| n_core_app\n  n_irt -->|SFTP files| n_core_app\n  n_safety_etl -->|Nightly extract| n_oracle_db\n  n_safety_etl -->|Reconciliation feed| n_safety_db\n  n_core_app -->|Document links| n_sharepoint_tmf\n  n_core_app -->|LDAP bind| n_ldap\n  classDef t_frontend fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e\n  classDef t_backend fill:#ede9fe,stroke:#7c3aed,color:#3b0764\n  classDef t_database fill:#fef3c7,stroke:#d97706,color:#78350f\n  classDef t_storage fill:#fef3c7,stroke:#d97706,color:#78350f\n  classDef t_integration fill:#dcfce7,stroke:#16a34a,color:#14532d\n  classDef t_batch fill:#fce7f3,stroke:#db2777,color:#831843\n  classDef t_reporting fill:#f1f5f9,stroke:#475569,color:#0f172a\n  classDef t_identity fill:#ffedd5,stroke:#ea580c,color:#7c2d12\n  classDef t_external fill:#f8fafc,stroke:#94a3b8,color:#334155,stroke-dasharray:4 3",
     "target": "flowchart LR\n  n_spa([\"<b>TrialHub Web</b><br/><small>Amazon S3 + CloudFront</small>\"])\n  class n_spa t_frontend\n  n_apigw[\"<b>API Facade</b><br/><small>Amazon API Gateway</small>\"]\n  class n_apigw t_integration\n  n_core[\"<b>TrialHub Core (container)</b><br/><small>Amazon EKS (Jakarta EE runtime)</small>\"]\n  class n_core t_backend\n  n_site_svc[\"<b>Site & Monitoring Services</b><br/><small>Amazon EKS</small>\"]\n  class n_site_svc t_backend\n  n_rds_oracle[(\"<b>TrialHub Database</b><br/><small>Amazon RDS for Oracle (Multi-AZ)</small>\")]\n  class n_rds_oracle t_database\n  n_site_db[(\"<b>Service Data</b><br/><small>Amazon Aurora PostgreSQL</small>\")]\n  class n_site_db t_database\n  n_etl[\"<b>Safety Reconciliation</b><br/><small>AWS Step Functions + AWS Glue</small>\"]\n  class n_etl t_batch\n  n_sftp[\"<b>IRT File Exchange</b><br/><small>AWS Transfer Family</small>\"]\n  class n_sftp t_integration\n  n_identity[\"<b>Identity</b><br/><small>Amazon Cognito + corporate IdP</small>\"]\n  class n_identity t_identity\n  n_audit[\"<b>Audit & Monitoring</b><br/><small>AWS CloudTrail + Amazon CloudWatch</small>\"]\n  class n_audit t_reporting\n  n_edc{{\"<b>EDC System</b><br/><small>Vendor SaaS</small>\"}}\n  class n_edc t_external\n  n_safety{{\"<b>Safety Database</b><br/><small>Existing</small>\"}}\n  class n_safety t_external\n  n_spa -->|REST/JSON| n_apigw\n  n_edc -->|SOAP (facade)| n_apigw\n  n_apigw -->|Legacy routes| n_core\n  n_apigw -->|New routes| n_site_svc\n  n_core -->|JDBC + PL/SQL| n_rds_oracle\n  n_site_svc -->|SQL| n_site_db\n  n_site_svc -->|Domain events| n_core\n  n_sftp -->|IRT files| n_core\n  n_etl -->|Nightly extract| n_rds_oracle\n  n_etl -->|Reconciliation feed| n_safety\n  n_spa -->|OIDC + MFA| n_identity\n  n_core -->|Audit events| n_audit\n  classDef t_frontend fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e\n  classDef t_backend fill:#ede9fe,stroke:#7c3aed,color:#3b0764\n  classDef t_database fill:#fef3c7,stroke:#d97706,color:#78350f\n  classDef t_storage fill:#fef3c7,stroke:#d97706,color:#78350f\n  classDef t_integration fill:#dcfce7,stroke:#16a34a,color:#14532d\n  classDef t_batch fill:#fce7f3,stroke:#db2777,color:#831843\n  classDef t_reporting fill:#f1f5f9,stroke:#475569,color:#0f172a\n  classDef t_identity fill:#ffedd5,stroke:#ea580c,color:#7c2d12\n  classDef t_external fill:#f8fafc,stroke:#94a3b8,color:#334155,stroke-dasharray:4 3",
     "roadmap": "gantt\n  dateFormat YYYY-MM-DD\n  axisFormat %d %b\n  title Migration roadmap\n  section Mobilise and validation planning\n  Mobilise and validation planning :p1, 2026-10-19, 28d\n  QA approval of Validation Plan :milestone, m1_1, 2026-11-16, 0d\n  section GxP landing zone\n  GxP landing zone :p2, 2026-11-02, 42d\n  Infrastructure IQ :milestone, m2_1, 2026-12-14, 0d\n  section Replatform the monolith\n  Replatform the monolith :p3, 2026-12-14, 98d\n  OQ regression :milestone, m3_1, 2027-03-22, 0d\n  Data migration verification :milestone, m3_2, 2027-03-22, 0d\n  section Production cutover\n  Production cutover :p4, 2027-03-22, 42d\n  PQ sign-off :milestone, m4_1, 2027-05-03, 0d\n  QA release for GCP use :milestone, m4_2, 2027-05-03, 0d\n  section Strangle site and monitoring services\n  Strangle site and monitoring services :p5, 2027-04-19, 112d\n  OQ per released service :milestone, m5_1, 2027-08-09, 0d\n  section Integration modernisation\n  Integration modernisation :p6, 2027-05-17, 84d\n  Interface OQ :milestone, m6_1, 2027-08-09, 0d\n  section Optimise and decommission\n  Optimise and decommission :p7, 2027-08-23, 56d\n  Periodic review schedule approved :milestone, m7_1, 2027-10-18, 0d"
+  },
+  "source_document": null,
+  "extraction_confidence": null,
+  "compliance": {
+    "headline": "TrialHub stays inspection-ready through strangler-fig refactoring and risk-based CSA; main compliance work is audit-trail continuity, 25-year TMF retention, EU subject-data residency and multi-vendor supplier qualification.",
+    "overall_posture": "manageable",
+    "gaps": [
+      {
+        "id": "audit_trail_continuity",
+        "title": "Inspection-ready audit trail must survive the Oracle migration",
+        "description": "Part 11 audit tables are an inspection-grade GCP record. Any migration that drops time-zone metadata, re-sequences rows or recreates sequences invalidates evidence.",
+        "severity": "critical",
+        "gxp_related": true,
+        "frameworks": [
+          "21 CFR Part 11",
+          "EU GMP Annex 11",
+          "Data Integrity (ALCOA+)"
+        ],
+        "clauses": [
+          "21 CFR 11.10(e)",
+          "21 CFR 11.10(b)",
+          "Annex 11 §9",
+          "Annex 11 §4.8",
+          "ALCOA+"
+        ],
+        "linked_risk_ids": [
+          "R01"
+        ],
+        "linked_component_ids": [
+          "oracle_db"
+        ],
+        "mitigation": "Hash and row-count reconciliation of every audit table; validated migration pipeline under change control; QA sign-off on the Data Migration Verification Report before cutover.",
+        "validation_activity": "OQ on migrated audit tables + Data Migration Verification Report"
+      },
+      {
+        "id": "tmf_retention_25yr",
+        "title": "25-year TMF record retention and archive accessibility",
+        "description": "Trial master file records must remain readable and accessible for 25 years from study end, through infrastructure changes.",
+        "severity": "major",
+        "gxp_related": true,
+        "frameworks": [
+          "21 CFR Part 11",
+          "EU GMP Annex 11"
+        ],
+        "clauses": [
+          "21 CFR 11.10(c)",
+          "Annex 11 §17"
+        ],
+        "linked_risk_ids": [],
+        "linked_component_ids": [
+          "sharepoint_tmf",
+          "oracle_db"
+        ],
+        "mitigation": "Long-term archive on object storage with lifecycle policies; annual archive-restore drill as part of periodic review.",
+        "validation_activity": "Archive IQ and annual restore test documented"
+      },
+      {
+        "id": "eu_subject_data_residency",
+        "title": "EU subject data must stay in the EU",
+        "description": "Pseudonymised subject enrolment data for EU sites is GDPR special category. A single US-hosted deployment would breach residency commitments.",
+        "severity": "critical",
+        "gxp_related": true,
+        "frameworks": [
+          "GDPR",
+          "EU GMP Annex 11"
+        ],
+        "clauses": [
+          "GDPR Art. 44",
+          "GDPR Art. 32",
+          "Annex 11 §12"
+        ],
+        "linked_risk_ids": [],
+        "linked_component_ids": [],
+        "mitigation": "Deploy EU workloads in an EU AWS region (eu-west-1 or eu-central-1); apply SCP region allow-list guardrail; update DPIA; document any legitimate cross-border flows.",
+        "validation_activity": "Infrastructure IQ confirms region guardrail; DPIA updated"
+      },
+      {
+        "id": "release_cadence_validation",
+        "title": "Modular releases require independently validated services",
+        "description": "The target monthly-release ambition only holds if each extracted service validates independently, under a CSA / GAMP 5 approach rather than full-system re-validation.",
+        "severity": "major",
+        "gxp_related": true,
+        "frameworks": [
+          "GAMP 5",
+          "FDA CSA guidance",
+          "EU GMP Annex 11"
+        ],
+        "clauses": [
+          "GAMP 5 §4",
+          "GAMP 5 §5",
+          "FDA CSA §IV.A",
+          "Annex 11 §4"
+        ],
+        "linked_risk_ids": [],
+        "linked_component_ids": [],
+        "mitigation": "Per-service URS/FS/IQ/OQ artefacts with traceability; automated OQ as the primary test evidence; QA release per service; periodic review per service.",
+        "validation_activity": "OQ per released service"
+      },
+      {
+        "id": "vendor_qualification",
+        "title": "AWS and SaaS vendors must be qualified as GxP suppliers",
+        "description": "EDC and IRT vendors are already qualified; AWS and any new managed services need the same treatment, with shared-responsibility documentation.",
+        "severity": "major",
+        "gxp_related": true,
+        "frameworks": [
+          "EU GMP Annex 11",
+          "GAMP 5"
+        ],
+        "clauses": [
+          "Annex 11 §3",
+          "GAMP 5 Appendix M4",
+          "GAMP 5 §D4"
+        ],
+        "linked_risk_ids": [],
+        "linked_component_ids": [],
+        "mitigation": "Use AWS GxP compliance guidance and audit reports (SOC 2 Type II, ISO 27001); quality agreement; add AWS to the supplier register with periodic review.",
+        "validation_activity": "AWS Supplier Assessment Report + Quality Agreement"
+      },
+      {
+        "id": "identity_mfa_site_users",
+        "title": "External site users managed manually without MFA",
+        "description": "Site users today are manually provisioned without MFA. Federated identity with MFA closes an access-control gap for a system holding Part 11 records.",
+        "severity": "major",
+        "gxp_related": true,
+        "frameworks": [
+          "21 CFR Part 11",
+          "EU GMP Annex 11"
+        ],
+        "clauses": [
+          "21 CFR 11.10(d)",
+          "21 CFR 11.10(g)",
+          "21 CFR 11.200",
+          "Annex 11 §12"
+        ],
+        "linked_risk_ids": [],
+        "linked_component_ids": [
+          "ldap"
+        ],
+        "mitigation": "Federated identity via Cognito with external IdP; MFA for site users; self-service onboarding workflow with site-manager approval.",
+        "validation_activity": "OQ on identity flow including MFA; access-matrix periodic review"
+      },
+      {
+        "id": "pipeline_change_control",
+        "title": "CI/CD pipelines must stay under change control",
+        "description": "Automated infrastructure and application pipelines are a change path and must be governed; today's manual process has implicit traceability through CAB records that automation must preserve.",
+        "severity": "minor",
+        "gxp_related": true,
+        "frameworks": [
+          "EU GMP Annex 11",
+          "GAMP 5"
+        ],
+        "clauses": [
+          "Annex 11 §10",
+          "GAMP 5 §M11"
+        ],
+        "linked_risk_ids": [],
+        "linked_component_ids": [],
+        "mitigation": "Protected branches, QA approval gates on production deploys, traceable change-ticket -> commit -> artefact chain; pipeline definitions versioned and reviewed.",
+        "validation_activity": "CI/CD pipeline qualification (IQ) and periodic review"
+      }
+    ],
+    "required_controls": [
+      {
+        "name": "Immutable, centrally retained audit logs",
+        "description": "Centralise application and database audit events to CloudWatch Logs with cross-account aggregation and retention sized to the 25-year TMF requirement.",
+        "frameworks": [
+          "21 CFR Part 11",
+          "EU GMP Annex 11"
+        ],
+        "clauses": [
+          "21 CFR 11.10(e)",
+          "Annex 11 §9"
+        ]
+      },
+      {
+        "name": "Region-restriction guardrails",
+        "description": "AWS SCPs enforcing EU-only regions for Cork workloads; cross-region replication only to EU.",
+        "frameworks": [
+          "GDPR"
+        ],
+        "clauses": [
+          "GDPR Art. 44",
+          "GDPR Art. 32"
+        ]
+      },
+      {
+        "name": "Qualified landing zone",
+        "description": "Multi-account GxP landing zone built from version-controlled IaC with change control; infrastructure qualified via IQ.",
+        "frameworks": [
+          "GAMP 5",
+          "EU GMP Annex 11"
+        ],
+        "clauses": [
+          "GAMP 5 §M11",
+          "Annex 11 §10"
+        ]
+      },
+      {
+        "name": "Federated identity with MFA",
+        "description": "Cognito + corporate IdP with MFA for staff and sites; access matrix reviewed every six months.",
+        "frameworks": [
+          "21 CFR Part 11"
+        ],
+        "clauses": [
+          "21 CFR 11.10(d)",
+          "21 CFR 11.200",
+          "21 CFR 11.300"
+        ]
+      },
+      {
+        "name": "Vendor supplier register updated for AWS",
+        "description": "AWS listed with quality agreement, shared-responsibility matrix and periodic review cadence; same treatment for any new SaaS.",
+        "frameworks": [
+          "EU GMP Annex 11",
+          "GAMP 5"
+        ],
+        "clauses": [
+          "Annex 11 §3",
+          "GAMP 5 Appendix M4"
+        ]
+      },
+      {
+        "name": "Validated archive and restore path",
+        "description": "Long-term object-storage archive for TMF documents and audit data; annual restore drill proving readability and integrity.",
+        "frameworks": [
+          "EU GMP Annex 11"
+        ],
+        "clauses": [
+          "Annex 11 §17",
+          "Annex 11 §16"
+        ]
+      },
+      {
+        "name": "Per-service validation evidence",
+        "description": "Each extracted service carries its own URS/FS/IQ/OQ artefacts and a traceability matrix, enabling independent releases.",
+        "frameworks": [
+          "GAMP 5",
+          "FDA CSA guidance"
+        ],
+        "clauses": [
+          "GAMP 5 §4",
+          "FDA CSA §IV.B",
+          "GAMP 5 Appendix D5"
+        ]
+      }
+    ],
+    "validation_strategy": "Risk-based CSA aligned with GAMP 5 and FDA CSA: Validation Plan approved by QA before Wave 1; Infrastructure IQ on the GxP landing zone; OQ scope targeted at changed functions (migrated Oracle schema and audit tables, extracted services, modernised identity flow); PQ via parallel run across one monitoring cycle for the replatformed monolith and each extracted service. Managed AWS services are treated as GAMP 5 Category 1 infrastructure, leveraging AWS supplier evidence. Change control and periodic review follow Annex 11 §10 and §16 across the subsequent extraction waves."
   }
 }

@@ -1,6 +1,6 @@
 {
   "id": "sample-labtrack-lims",
-  "generated_at": "2026-10-13 05:19 UTC",
+  "generated_at": "2026-10-13 06:23 UTC",
   "mode": "cached",
   "model": "claude-opus-5-5",
   "target_cloud": "azure",
@@ -837,5 +837,256 @@
     "current": "flowchart LR\n  n_web_app([\"<b>LabTrack Web Portal</b><br/><small>ASP.NET WebForms, .NET Framework 4.5 on IIS 8.5</small>\"])\n  class n_web_app t_frontend\n  n_sql_db[(\"<b>LabTrack Database</b><br/><small>SQL Server 2012 Standard (~600 GB)</small>\")]\n  class n_sql_db t_database\n  n_instrument_svc[\"<b>Instrument Integration Service</b><br/><small>Windows Service (.NET 4.5) polling an SMB share</small>\"]\n  class n_instrument_svc t_integration\n  n_coa_reports[\"<b>CoA Report Engine</b><br/><small>Crystal Reports 13 runtime on the web servers</small>\"]\n  class n_coa_reports t_reporting\n  n_file_share[(\"<b>Instrument Drop Share</b><br/><small>Windows SMB file share</small>\")]\n  class n_file_share t_storage\n  n_empower{{\"<b>Empower CDS</b><br/><small>Waters Empower 3 (CSV export)</small>\"}}\n  class n_empower t_external\n  n_sap_ecc{{\"<b>SAP ECC</b><br/><small>Nightly flat-file export</small>\"}}\n  class n_sap_ecc t_external\n  n_active_directory[\"<b>Active Directory</b><br/><small>Windows Integrated Authentication</small>\"]\n  class n_active_directory t_identity\n  n_smtp[\"<b>SMTP Relay</b><br/><small>On-premises SMTP relay</small>\"]\n  class n_smtp t_integration\n  n_empower -->|CSV result export| n_file_share\n  n_file_share -->|SMB poll every 5 min| n_instrument_svc\n  n_instrument_svc -->|ADO.NET inserts| n_sql_db\n  n_web_app -->|Stored procedure calls| n_sql_db\n  n_web_app -->|Render CoA| n_coa_reports\n  n_coa_reports -->|Report queries| n_sql_db\n  n_sap_ecc -->|Nightly flat-file import| n_sql_db\n  n_web_app -->|Windows auth| n_active_directory\n  n_web_app -->|Notifications| n_smtp\n  classDef t_frontend fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e\n  classDef t_backend fill:#ede9fe,stroke:#7c3aed,color:#3b0764\n  classDef t_database fill:#fef3c7,stroke:#d97706,color:#78350f\n  classDef t_storage fill:#fef3c7,stroke:#d97706,color:#78350f\n  classDef t_integration fill:#dcfce7,stroke:#16a34a,color:#14532d\n  classDef t_batch fill:#fce7f3,stroke:#db2777,color:#831843\n  classDef t_reporting fill:#f1f5f9,stroke:#475569,color:#0f172a\n  classDef t_identity fill:#ffedd5,stroke:#ea580c,color:#7c2d12\n  classDef t_external fill:#f8fafc,stroke:#94a3b8,color:#334155,stroke-dasharray:4 3",
     "target": "flowchart LR\n  n_web([\"<b>LabTrack Web</b><br/><small>Azure App Service (Windows, .NET 4.8)</small>\"])\n  class n_web t_frontend\n  n_redis[(\"<b>Session Cache</b><br/><small>Azure Cache for Redis</small>\")]\n  class n_redis t_storage\n  n_sqlmi[(\"<b>LabTrack Database</b><br/><small>Azure SQL Managed Instance</small>\")]\n  class n_sqlmi t_database\n  n_ingest[\"<b>Instrument Ingestion</b><br/><small>Azure Functions</small>\"]\n  class n_ingest t_integration\n  n_vault[(\"<b>Raw Results Vault</b><br/><small>Azure Blob Storage (immutable)</small>\")]\n  class n_vault t_storage\n  n_bus[\"<b>Result Events</b><br/><small>Azure Service Bus</small>\"]\n  class n_bus t_integration\n  n_reports[\"<b>CoA Reporting</b><br/><small>Power BI paginated reports</small>\"]\n  class n_reports t_reporting\n  n_adf[\"<b>SAP Batch Sync</b><br/><small>Azure Data Factory</small>\"]\n  class n_adf t_batch\n  n_entra[\"<b>Identity</b><br/><small>Microsoft Entra ID</small>\"]\n  class n_entra t_identity\n  n_monitor[\"<b>Audit & Monitoring</b><br/><small>Azure Monitor + Log Analytics</small>\"]\n  class n_monitor t_reporting\n  n_empower{{\"<b>Empower CDS</b><br/><small>On-premises lab network</small>\"}}\n  class n_empower t_external\n  n_sap{{\"<b>SAP ECC</b><br/><small>On-premises</small>\"}}\n  class n_sap t_external\n  n_empower -->|Upload agent over VPN| n_vault\n  n_vault -->|Blob created event| n_ingest\n  n_ingest -->|Hashed result + audit entry| n_sqlmi\n  n_ingest -->|Result event| n_bus\n  n_bus -->|Reviewer notification| n_web\n  n_web -->|Stored procedures| n_sqlmi\n  n_web -->|Session state| n_redis\n  n_web -->|Render CoA| n_reports\n  n_reports -->|Report queries| n_sqlmi\n  n_sap -->|Batch master data| n_adf\n  n_adf -->|Scheduled load| n_sqlmi\n  n_web -->|OIDC SSO + MFA| n_entra\n  n_web -->|App and audit logs| n_monitor\n  n_sqlmi -->|SQL audit logs| n_monitor\n  classDef t_frontend fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e\n  classDef t_backend fill:#ede9fe,stroke:#7c3aed,color:#3b0764\n  classDef t_database fill:#fef3c7,stroke:#d97706,color:#78350f\n  classDef t_storage fill:#fef3c7,stroke:#d97706,color:#78350f\n  classDef t_integration fill:#dcfce7,stroke:#16a34a,color:#14532d\n  classDef t_batch fill:#fce7f3,stroke:#db2777,color:#831843\n  classDef t_reporting fill:#f1f5f9,stroke:#475569,color:#0f172a\n  classDef t_identity fill:#ffedd5,stroke:#ea580c,color:#7c2d12\n  classDef t_external fill:#f8fafc,stroke:#94a3b8,color:#334155,stroke-dasharray:4 3",
     "roadmap": "gantt\n  dateFormat YYYY-MM-DD\n  axisFormat %d %b\n  title Migration roadmap\n  section Assess and validation planning\n  Assess and validation planning :p1, 2026-10-19, 21d\n  QA approval of Validation Plan :milestone, m1_1, 2026-11-09, 0d\n  section Landing zone and foundation\n  Landing zone and foundation :p2, 2026-11-02, 28d\n  Infrastructure IQ executed :milestone, m2_1, 2026-11-30, 0d\n  section Pilot - database and web replatform\n  Pilot - database and web replatform :p3, 2026-11-30, 42d\n  OQ on changed functions :milestone, m3_1, 2027-01-11, 0d\n  section Event-driven instrument ingestion\n  Event-driven instrument ingestion :p4, 2026-12-28, 42d\n  OQ for ingestion :milestone, m4_1, 2027-02-08, 0d\n  Data integrity review :milestone, m4_2, 2027-02-08, 0d\n  section Production cutover and PQ\n  Production cutover and PQ :p5, 2027-02-08, 56d\n  PQ sign-off :milestone, m5_1, 2027-04-05, 0d\n  QA release for GxP use :milestone, m5_2, 2027-04-05, 0d\n  section Optimise and decommission\n  Optimise and decommission :p6, 2027-04-05, 42d\n  Periodic review schedule approved :milestone, m6_1, 2027-05-17, 0d"
+  },
+  "source_document": null,
+  "extraction_confidence": null,
+  "compliance": {
+    "headline": "LabTrack keeps its validated status through a risk-based CSA plan; main compliance work is around audit-trail continuity, e-signature identity, instrument data integrity and cloud supplier qualification.",
+    "overall_posture": "manageable",
+    "gaps": [
+      {
+        "id": "audit_trail_continuity",
+        "title": "Audit trail must survive the SQL Server migration unaltered",
+        "description": "The in-database audit trail (47 tables) is a GxP record. Any migration tooling that re-sequences rows, loses time-zone metadata, or recreates identity columns would invalidate inspection evidence.",
+        "severity": "critical",
+        "gxp_related": true,
+        "frameworks": [
+          "21 CFR Part 11",
+          "EU GMP Annex 11",
+          "Data Integrity (ALCOA+)"
+        ],
+        "clauses": [
+          "21 CFR 11.10(e)",
+          "21 CFR 11.10(b)",
+          "Annex 11 §9",
+          "Annex 11 §4.8",
+          "ALCOA+"
+        ],
+        "linked_risk_ids": [
+          "R02",
+          "R03"
+        ],
+        "linked_component_ids": [
+          "sql_db"
+        ],
+        "mitigation": "Row-count and SHA-256 hash reconciliation of every audit table before and after migration; validated migration tooling under change control; QA review and sign-off on reconciliation report before production go-live.",
+        "validation_activity": "OQ on migrated audit tables + Data Migration Verification Report"
+      },
+      {
+        "id": "esignature_identity_mfa",
+        "title": "Electronic-signature re-authentication without MFA",
+        "description": "Part 11 e-signatures today rely on AD username/password only. The migration is the right moment to add MFA at the signature event, closing an open internal audit observation (GXP-OBS-2024-087).",
+        "severity": "major",
+        "gxp_related": true,
+        "frameworks": [
+          "21 CFR Part 11"
+        ],
+        "clauses": [
+          "21 CFR 11.200",
+          "21 CFR 11.300",
+          "21 CFR 11.10(g)"
+        ],
+        "linked_risk_ids": [],
+        "linked_component_ids": [
+          "active_directory",
+          "web_app"
+        ],
+        "mitigation": "Entra ID conditional access policy requiring MFA at the e-signature endpoint; update signature manifestation to record the authentication method.",
+        "validation_activity": "OQ for e-signature flow with MFA; update URS/FS traceability"
+      },
+      {
+        "id": "instrument_file_integrity",
+        "title": "Instrument result files are not cryptographically protected before ingestion",
+        "description": "Empower CSV files can be modified or deleted on the SMB share before the Windows Service picks them up (open gap GXP-OBS-2025-044). This is an ALCOA+ 'original/complete' finding.",
+        "severity": "major",
+        "gxp_related": true,
+        "frameworks": [
+          "EU GMP Annex 11",
+          "Data Integrity (ALCOA+)"
+        ],
+        "clauses": [
+          "Annex 11 §7",
+          "Annex 11 §9",
+          "ALCOA+"
+        ],
+        "linked_risk_ids": [
+          "R05"
+        ],
+        "linked_component_ids": [
+          "instrument_svc",
+          "file_share"
+        ],
+        "mitigation": "Event-driven ingestion with SHA-256 hashing at arrival; WORM blob storage (immutability policy) for the raw file vault; hash recorded on the result row for traceability.",
+        "validation_activity": "OQ for the new ingestion path + updated Data Integrity SOP"
+      },
+      {
+        "id": "cloud_supplier_qualification",
+        "title": "Azure must be qualified as a GxP supplier",
+        "description": "A regulated workload on Azure requires a supplier assessment, quality agreement, documented shared responsibility, and periodic review - not previously performed for LabTrack.",
+        "severity": "major",
+        "gxp_related": true,
+        "frameworks": [
+          "EU GMP Annex 11",
+          "GAMP 5"
+        ],
+        "clauses": [
+          "Annex 11 §3",
+          "GAMP 5 Appendix M4",
+          "GAMP 5 §D4"
+        ],
+        "linked_risk_ids": [
+          "R07"
+        ],
+        "linked_component_ids": [],
+        "mitigation": "Use Microsoft's GxP shared-responsibility documentation and audit reports (SOC 2 Type II, ISO 27001, ISO 9001); sign a quality agreement; add Azure to the supplier register with periodic review.",
+        "validation_activity": "Supplier Assessment Report + Quality Agreement"
+      },
+      {
+        "id": "eu_data_residency",
+        "title": "Cork site records must remain in the EU",
+        "description": "Analyst personal data for the Ireland site must stay inside the EU. A single global deployment or an unrestricted replica would breach residency commitments.",
+        "severity": "major",
+        "gxp_related": true,
+        "frameworks": [
+          "GDPR",
+          "EU GMP Annex 11"
+        ],
+        "clauses": [
+          "GDPR Art. 44",
+          "GDPR Art. 32",
+          "Annex 11 §12"
+        ],
+        "linked_risk_ids": [
+          "R08"
+        ],
+        "linked_component_ids": [],
+        "mitigation": "Deploy Cork site resources to an EU region (e.g. North Europe); apply an Azure Policy allowed-locations guardrail; document data flows in the Data Protection Impact Assessment.",
+        "validation_activity": "Infrastructure IQ confirms region restriction; DPIA updated"
+      },
+      {
+        "id": "disaster_recovery_rpo_rto",
+        "title": "Current backup RTO exceeds the stated target",
+        "description": "Tape-based restore takes ~9 hours against a stated RTO of 4 hours (open observation GXP-OBS-2026-019). Managed point-in-time restore closes this.",
+        "severity": "minor",
+        "gxp_related": true,
+        "frameworks": [
+          "EU GMP Annex 11"
+        ],
+        "clauses": [
+          "Annex 11 §16",
+          "Annex 11 §7"
+        ],
+        "linked_risk_ids": [],
+        "linked_component_ids": [
+          "sql_db"
+        ],
+        "mitigation": "Azure SQL MI geo-redundant backup with point-in-time restore; annual DR exercise documented against the stated 4-hour RTO.",
+        "validation_activity": "DR test report; periodic review schedule updated"
+      },
+      {
+        "id": "cicd_change_control",
+        "title": "Infrastructure-as-code and CI/CD must stay under change control",
+        "description": "Automated pipelines are a change path that must be governed; the current manual deployment ritual is replaced by code promotion with QA approval gates.",
+        "severity": "minor",
+        "gxp_related": true,
+        "frameworks": [
+          "EU GMP Annex 11",
+          "GAMP 5"
+        ],
+        "clauses": [
+          "Annex 11 §10",
+          "GAMP 5 §M11"
+        ],
+        "linked_risk_ids": [],
+        "linked_component_ids": [],
+        "mitigation": "Protected branches, mandatory peer and QA approval on production deploys, traceability from change ticket to deployed artefact; pipeline configuration itself under version control.",
+        "validation_activity": "CI/CD pipeline qualification (IQ) and periodic review"
+      }
+    ],
+    "required_controls": [
+      {
+        "name": "Immutable, centrally retained audit logs",
+        "description": "Centralise application and database audit events to Log Analytics with 10-year retention and tamper-evident storage.",
+        "frameworks": [
+          "21 CFR Part 11",
+          "EU GMP Annex 11"
+        ],
+        "clauses": [
+          "21 CFR 11.10(e)",
+          "Annex 11 §9"
+        ]
+      },
+      {
+        "name": "MFA at electronic-signature events",
+        "description": "Require Entra ID MFA when a result is approved; capture authentication method in signature manifestation.",
+        "frameworks": [
+          "21 CFR Part 11"
+        ],
+        "clauses": [
+          "21 CFR 11.200",
+          "21 CFR 11.10(g)",
+          "21 CFR 11.50"
+        ]
+      },
+      {
+        "name": "WORM landing zone for instrument data",
+        "description": "Original Empower exports stored with blob immutability policy and SHA-256 hashes recorded alongside each result row.",
+        "frameworks": [
+          "EU GMP Annex 11",
+          "Data Integrity (ALCOA+)"
+        ],
+        "clauses": [
+          "Annex 11 §7",
+          "ALCOA+"
+        ]
+      },
+      {
+        "name": "Region-restriction guardrails",
+        "description": "Azure Policy allowed-locations enforcement so Cork resources cannot be deployed outside the EU.",
+        "frameworks": [
+          "GDPR"
+        ],
+        "clauses": [
+          "GDPR Art. 44",
+          "GDPR Art. 32"
+        ]
+      },
+      {
+        "name": "Qualified landing zone (IaC under change control)",
+        "description": "The GxP landing zone is built from version-controlled infrastructure-as-code with approval gates; infrastructure qualified via IQ.",
+        "frameworks": [
+          "GAMP 5",
+          "EU GMP Annex 11"
+        ],
+        "clauses": [
+          "GAMP 5 §M11",
+          "Annex 11 §10"
+        ]
+      },
+      {
+        "name": "Supplier register entry for Azure (GxP)",
+        "description": "Azure listed as a qualified supplier with quality agreement, shared-responsibility matrix and periodic review cadence.",
+        "frameworks": [
+          "EU GMP Annex 11",
+          "GAMP 5"
+        ],
+        "clauses": [
+          "Annex 11 §3",
+          "GAMP 5 Appendix M4"
+        ]
+      },
+      {
+        "name": "Validated point-in-time restore",
+        "description": "Managed-database PITR tested annually; evidence stored with the periodic review.",
+        "frameworks": [
+          "EU GMP Annex 11"
+        ],
+        "clauses": [
+          "Annex 11 §16",
+          "Annex 11 §7"
+        ]
+      }
+    ],
+    "validation_strategy": "Risk-based CSA aligned with GAMP 5: Validation Plan agreed with QA before work starts; Infrastructure IQ on the landing zone (Phase 2); targeted OQ on changed functions and all data-integrity-impacting changes (audit trail migration, e-signature flow, instrument ingestion); PQ via parallel run across two batch-release cycles before QA release for GxP use. Managed Azure services are treated as GAMP 5 Category 1 infrastructure, letting us lean on Microsoft's qualification evidence. Change control, periodic review and backup/restore tests continue post go-live."
   }
 }
