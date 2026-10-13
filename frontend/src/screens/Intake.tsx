@@ -7,13 +7,16 @@ import {
   Info,
   Layers,
   Pencil,
-  ShieldCheck,
   Stethoscope,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { getSample } from '../api'
+import { Hero } from '../components/brand/Hero'
+import { SectionHeader } from '../components/brand/SectionHeader'
+import { StepStrip } from '../components/brand/StepStrip'
+import { TrustBand } from '../components/brand/TrustBand'
 import { CloudPicker } from '../components/intake/CloudPicker'
 import { ProfileForm } from '../components/intake/ProfileForm'
 import { SampleCards } from '../components/intake/SampleCards'
@@ -21,7 +24,6 @@ import { EMPTY_UPLOAD, UploadPanel } from '../components/intake/UploadPanel'
 import type { UploadState } from '../components/intake/UploadPanel'
 import { ZipDropZone } from '../components/intake/ZipDropZone'
 import type { ScanState } from '../components/intake/ZipDropZone'
-import { TAGLINE } from '../components/Header'
 import { Button, Card, cx, SectionTitle } from '../components/ui'
 import type { HealthState } from '../hooks/useHealth'
 import { isLive } from '../hooks/useHealth'
@@ -29,12 +31,12 @@ import { MOCK_REPORT_SAMPLE_ID, MOCK_SAMPLE_DETAILS } from '../mock'
 import type { AppProfile, CloudProvider, SampleSummary } from '../types'
 import { EMPTY_PROFILE } from '../types'
 
-const OBJECTIVES = [
-  'Current architecture',
-  'Cloud-readiness score',
-  'Risks & opportunities',
-  'Target architecture + 7R',
-  'Migration roadmap',
+const PROCESS_STEPS = [
+  { title: 'Brief', body: 'Pick a sample or upload a current-state assessment PDF.' },
+  { title: 'Extract', body: 'Profile, components and tech inventory are parsed from the document.' },
+  { title: 'Diagnose', body: 'Seven readiness dimensions, risk register and opportunities are scored.' },
+  { title: 'Prescribe', body: 'Target architecture with a 7R strategy per component.' },
+  { title: 'Roadmap', body: 'Phased migration plan with IQ/OQ/PQ validation gates.' },
 ]
 
 export type IntakeMode = 'describe' | 'upload'
@@ -72,9 +74,29 @@ export function Intake({
 }) {
   const [loadingSample, setLoadingSample] = useState<string | null>(null)
   const [nameError, setNameError] = useState(false)
+  const intakeRef = useRef<HTMLDivElement>(null)
 
   const update = (patch: Partial<IntakeState>) => onChange({ ...state, ...patch })
   const sampleName = samples?.find((s) => s.id === state.sampleId)?.name ?? state.sampleId
+
+  function scrollToIntake() {
+    const el = intakeRef.current
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.scrollY - 72
+      window.scrollTo({ top, behavior: 'smooth' })
+    }
+  }
+
+  function heroTrySample() {
+    update({ mode: 'describe' })
+    void selectSample(MOCK_REPORT_SAMPLE_ID)
+    scrollToIntake()
+  }
+
+  function heroUpload() {
+    update({ mode: 'upload' })
+    scrollToIntake()
+  }
 
   async function selectSample(id: string) {
     setLoadingSample(id)
@@ -116,29 +138,33 @@ export function Intake({
   const canRun = state.mode === 'upload' ? uploadReady : true
 
   return (
-    <form onSubmit={submit} className="mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6 lg:px-8 cc-fade-in" noValidate>
-      {/* Hero */}
-      <section className="mb-8">
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800 ring-1 ring-teal-100">
-          <ShieldCheck className="size-3.5" aria-hidden />
-          Compliance-aware: GxP · 21 CFR Part 11 · IQ/OQ/PQ gates
+    <form onSubmit={submit} className="cc-fade-in" noValidate>
+      {/* Medscribe-style hero */}
+      <Hero onTrySample={heroTrySample} onUpload={heroUpload} />
+
+      {/* Process strip */}
+      <div className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+        <div className="mb-5 text-center">
+          <SectionHeader
+            eyebrow="How it works"
+            title="Simple steps to a compliant modernization plan"
+            align="center"
+            size="sm"
+          />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-          Modernize legacy pharma apps <span className="text-teal-600">without losing validated state.</span>
-        </h1>
-        <p className="mt-2 max-w-3xl text-base text-slate-600 sm:text-lg">{TAGLINE}</p>
-        <ol className="mt-4 flex flex-wrap gap-2">
-          {OBJECTIVES.map((o, i) => (
-            <li
-              key={o}
-              className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600 shadow-sm ring-1 ring-slate-200"
-            >
-              <span className="grid size-5 place-items-center rounded-full bg-teal-600 text-[10px] font-bold text-white">{i + 1}</span>
-              {o}
-            </li>
-          ))}
-        </ol>
-      </section>
+        <StepStrip steps={PROCESS_STEPS} />
+      </div>
+
+      {/* Intake content */}
+      <div ref={intakeRef} className="mx-auto max-w-7xl px-4 pb-16 pt-4 sm:px-6 lg:px-8">
+      <div className="mb-6">
+        <SectionHeader
+          eyebrow="[ Start here ]"
+          title="Brief the advisor"
+          subtitle="Pick a sample, describe your app, or upload an assessment PDF."
+          size="md"
+        />
+      </div>
 
       {/* Intake mode tabs */}
       <div className="mb-5">
@@ -295,6 +321,9 @@ export function Intake({
           </div>
         </aside>
       </div>
+      </div>
+
+      <TrustBand />
     </form>
   )
 }
