@@ -18,7 +18,7 @@ const NODE_LEGEND: Array<{ type: ComponentType; fill: string; stroke: string; da
 ]
 
 export function DiagramLegend({ types }: { types: ComponentType[] }) {
-  const present = new Set(types.map((t) => (t === 'storage' ? 'database' : t)))
+  const present = new Set<ComponentType>(types.map((t) => (t === 'storage' ? 'database' : t)))
   const items = NODE_LEGEND.filter((l) => present.has(l.type))
   if (!items.length) return null
   return (
