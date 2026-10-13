@@ -1,0 +1,36 @@
+# Capability -> managed service per cloud. The advisor must name services from
+# the selected target cloud.
+services:
+  virtual_machines: {aws: Amazon EC2, azure: Azure Virtual Machines, gcp: Compute Engine}
+  managed_kubernetes: {aws: Amazon EKS, azure: Azure Kubernetes Service (AKS), gcp: Google Kubernetes Engine (GKE)}
+  serverless_containers: {aws: AWS Fargate (ECS), azure: Azure Container Apps, gcp: Cloud Run}
+  web_app_hosting: {aws: AWS Elastic Beanstalk, azure: Azure App Service, gcp: Cloud Run}
+  functions: {aws: AWS Lambda, azure: Azure Functions, gcp: Cloud Run functions}
+  managed_sql_server: {aws: Amazon RDS for SQL Server, azure: Azure SQL Managed Instance / Azure SQL Database, gcp: Cloud SQL for SQL Server}
+  managed_oracle: {aws: Amazon RDS for Oracle, azure: Oracle Database@Azure, gcp: Oracle Database@Google Cloud}
+  managed_postgresql: {aws: Amazon Aurora PostgreSQL / RDS for PostgreSQL, azure: Azure Database for PostgreSQL, gcp: Cloud SQL for PostgreSQL / AlloyDB}
+  managed_mysql: {aws: Amazon Aurora MySQL / RDS for MySQL, azure: Azure Database for MySQL, gcp: Cloud SQL for MySQL}
+  object_storage: {aws: Amazon S3 (Object Lock for WORM), azure: Azure Blob Storage (immutable storage), gcp: Cloud Storage (bucket lock)}
+  file_shares: {aws: Amazon FSx / EFS, azure: Azure Files, gcp: Filestore}
+  cache: {aws: Amazon ElastiCache, azure: Azure Cache for Redis, gcp: Memorystore}
+  messaging_queue: {aws: Amazon SQS / SNS, azure: Azure Service Bus, gcp: Pub/Sub}
+  event_routing: {aws: Amazon EventBridge, azure: Azure Event Grid, gcp: Eventarc}
+  api_gateway: {aws: Amazon API Gateway, azure: Azure API Management, gcp: Apigee / API Gateway}
+  integration_etl: {aws: AWS Glue / Step Functions, azure: Azure Data Factory / Logic Apps, gcp: Dataflow / Cloud Data Fusion}
+  scheduling: {aws: Amazon EventBridge Scheduler, azure: Logic Apps / Functions timer triggers, gcp: Cloud Scheduler}
+  workflow_orchestration: {aws: AWS Step Functions, azure: Logic Apps / Durable Functions, gcp: Workflows}
+  identity: {aws: AWS IAM Identity Center + Amazon Cognito, azure: Microsoft Entra ID, gcp: Cloud Identity / Identity Platform}
+  secrets: {aws: AWS Secrets Manager, azure: Azure Key Vault, gcp: Secret Manager}
+  monitoring_logging: {aws: Amazon CloudWatch, azure: Azure Monitor + Log Analytics, gcp: Cloud Monitoring + Cloud Logging}
+  audit_logging: {aws: AWS CloudTrail, azure: Azure Activity Log + Diagnostic settings, gcp: Cloud Audit Logs}
+  reporting_bi: {aws: Amazon QuickSight, azure: Power BI (incl. paginated reports), gcp: Looker}
+  data_warehouse: {aws: Amazon Redshift, azure: Microsoft Fabric / Azure Synapse, gcp: BigQuery}
+  email: {aws: Amazon SES, azure: Azure Communication Services Email, gcp: Third-party SMTP (e.g. SendGrid)}
+  sftp: {aws: AWS Transfer Family, azure: Azure Blob Storage SFTP, gcp: Partner SFTP on Compute Engine}
+  vm_migration: {aws: AWS Application Migration Service, azure: Azure Migrate, gcp: Migrate to Virtual Machines}
+  database_migration: {aws: AWS Database Migration Service, azure: Azure Database Migration Service, gcp: Database Migration Service}
+  landing_zone: {aws: AWS Control Tower, azure: Azure Landing Zones, gcp: Google Cloud setup / Cloud Foundation Toolkit}
+  policy_guardrails: {aws: AWS Organizations SCPs + AWS Config, azure: Azure Policy, gcp: Organization Policy Service}
+  private_connectivity: {aws: AWS Site-to-Site VPN / Direct Connect, azure: Azure VPN Gateway / ExpressRoute, gcp: Cloud VPN / Cloud Interconnect}
+regions_for_eu_residency: {aws: eu-west-1 (Ireland) / eu-central-1 (Frankfurt), azure: North Europe (Ireland) / West Europe (Netherlands), gcp: europe-west1 (Belgium) / europe-west3 (Frankfurt)}
+regions_for_india: {aws: ap-south-1 (Mumbai), azure: Central India (Pune), gcp: asia-south1 (Mumbai)}
