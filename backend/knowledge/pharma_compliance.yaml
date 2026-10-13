@@ -1,0 +1,53 @@
+# Pharma regulatory context the advisor must apply to every recommendation.
+regulations:
+  - id: 21 CFR Part 11
+    scope: US FDA rules for electronic records and electronic signatures.
+    migration_implications:
+      - Audit trails must be preserved, complete and readable after migration (who/what/when/why).
+      - Electronic signatures must stay linked to their records; identity provider changes need verification.
+      - Access controls, unique user IDs and authority checks must be re-verified on the new platform.
+  - id: EU GMP Annex 11
+    scope: EU requirements for computerised systems in GMP environments.
+    migration_implications:
+      - Risk management across the system lifecycle; supplier assessment for cloud and SaaS providers.
+      - Data migration must be validated to show data is not altered in value or meaning.
+      - Business continuity, backup and periodic review must be defined for the new platform.
+  - id: GAMP 5 (2nd edition)
+    scope: ISPE risk-based approach to compliant GxP computerised systems.
+    migration_implications:
+      - Software categories drive validation effort - Cat 1 infrastructure, Cat 3 non-configured, Cat 4 configured, Cat 5 custom.
+      - Managed cloud services are generally treated as infrastructure (Cat 1) with supplier leverage.
+  - id: FDA Computer Software Assurance (CSA)
+    scope: FDA guidance favouring risk-based, critical-thinking assurance over exhaustive scripted testing.
+    migration_implications:
+      - Focus scripted testing on high-risk functions (calculations, release decisions); use unscripted/exploratory testing elsewhere.
+      - Automated tests and tool-generated records are acceptable evidence.
+  - id: ALCOA+ data integrity
+    scope: Data must be Attributable, Legible, Contemporaneous, Original, Accurate + Complete, Consistent, Enduring, Available.
+    migration_implications:
+      - Preserve original records (raw instrument data) immutably with checksums.
+      - Reconcile record counts and hashes before and after data migration.
+  - id: Data privacy and residency
+    scope: GDPR (EU), HIPAA (US patient data), India DPDP Act, local health-data rules.
+    migration_implications:
+      - Pin regions for personal / patient data; document cross-border transfers.
+      - Pseudonymise clinical subject data; encrypt at rest and in transit with managed keys.
+
+validation_lifecycle:
+  plan: Validation Plan and GxP impact / risk assessment, agreed with QA before work starts.
+  iq: Installation Qualification - infrastructure and platform installed and configured as specified (often automated via IaC).
+  oq: Operational Qualification - system functions operate as intended (risk-based; automate regression).
+  pq: Performance Qualification - system performs in the real business process (often a parallel run).
+  report: Validation Summary Report and QA release before GxP use.
+  operate: Change control, periodic review, backup/restore tests, audit-trail review.
+
+gxp_cloud_controls:
+  - Supplier qualification of the cloud provider (audit reports such as SOC 2 / ISO 27001, quality agreement, shared-responsibility matrix).
+  - Qualified landing zone built from version-controlled infrastructure-as-code under change control.
+  - Region restriction policies for data residency.
+  - Immutable, centrally retained audit logs with time synchronisation.
+  - Validated backup/restore and disaster recovery with documented RPO/RTO.
+  - Record retention aligned to regulations (commonly 10-25 years) with readable archives.
+
+typical_gxp_systems: [LIMS, CDS, MES, eBR/EBR, QMS, CTMS, EDC, IRT, Pharmacovigilance/Safety DB, ERP batch release, Document management/eTMF, Serialization]
+typically_non_gxp: [CRM, Field force reporting, Marketing, HR, Finance (unless batch release), Collaboration]
