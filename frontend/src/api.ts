@@ -4,11 +4,9 @@ import type {
   AssessRequest,
   ChatMessage,
   ChatSeedsResponse,
-  CloudProvider,
   HealthResponse,
   IngestResponse,
   PortfolioView,
-  RStrategy,
   SampleDetail,
   SampleSummary,
   ScanResult,
@@ -129,26 +127,6 @@ export function getReport(id: string): Promise<AssessmentReport> {
   return requestJson<AssessmentReport>(`/api/reports/${encodeURIComponent(id)}`)
 }
 
-// -------------------------------------------------------------------- Recent Assessments
-
-export interface RecentReport {
-  id: string
-  name: string
-  strategy: RStrategy
-  readiness: number
-  readiness_band: string
-  weeks: number
-  gxp_critical: boolean
-  target_cloud: CloudProvider
-  generated_at: string
-  source_document: string | null
-  mode: 'live' | 'cached'
-}
-
-export function listRecentReports(limit = 20): Promise<RecentReport[]> {
-  return requestJson<RecentReport[]>(`/api/reports?limit=${limit}`)
-}
-
 // -------------------------------------------------------------------- Chat history persistence
 
 export interface ChatHistory {
@@ -169,10 +147,6 @@ export function saveChatHistory(reportId: string, messages: ChatMessage[]): Prom
 
 export async function clearChatHistory(reportId: string): Promise<void> {
   await request(`/api/reports/${encodeURIComponent(reportId)}/chat/history`, { method: 'DELETE' })
-}
-
-export async function deleteReport(id: string): Promise<void> {
-  await request(`/api/reports/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }
 
 export function markdownUrl(reportId: string): string {
