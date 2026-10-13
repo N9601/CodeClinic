@@ -176,8 +176,8 @@ export function Report({
         <div className="no-print mb-4 flex items-start gap-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200">
           <WifiOff className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />
           <span className="flex-1">
-            <span className="font-semibold">Offline demo.</span> The backend could not be reached, so this is the bundled
-            LabTrack LIMS report (target: Azure). Start the API to run live diagnoses.
+            <span className="font-semibold">Offline demo.</span> Showing the bundled LabTrack LIMS sample report (target:
+            Azure) without the backend. Start the API to run live diagnoses.
           </span>
           <button
             type="button"
