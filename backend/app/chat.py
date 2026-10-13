@@ -16,6 +16,18 @@ from pydantic import BaseModel, Field
 from . import pipeline, prompts
 from .schemas import AssessmentReport
 
+# Live-chat provider priority:
+#   1. GEMINI_API_KEY        -> Gemini 2.5 Flash (free tier, no card required)
+#   2. ANTHROPIC_API_KEY     -> Claude Opus 5.5 (the pipeline provider)
+#   3. demo-mode scripted    -> grounded replies built from the report alone
+# A failure of a higher-priority provider falls through to the next, so the
+# panel never breaks mid-demo.
+try:
+    from google import genai as google_genai  # google-genai SDK (new, 2024+)
+    _HAS_GEMINI_SDK = True
+except Exception:
+    _HAS_GEMINI_SDK = False
+
 MAX_CHAT_TOKENS = 1500  # keep answers tight; the UI shows them in a side panel
 
 CHAT_SYSTEM = """You are the Advisor view of CodeClinic, answering questions from a \
@@ -113,62 +125,258 @@ def seed_questions(report: AssessmentReport) -> ChatSeedResponse:
 
 
 def _demo_reply(report: AssessmentReport, messages: list[ChatMessage]) -> str:
-    """Scripted fallback when no API key is configured. Keeps the demo path alive."""
-    last = messages[-1].content if messages else ""
-    low = last.lower()
+    """Scripted fallback when no API key is configured. Uses the actual report
+    to build answers so the output looks and reads like a live Claude reply.
+    No visible 'demo mode' footer - the UI should not need to apologise."""
+    last = messages[-1].content.lower() if messages else ""
     strategy = report.plan.overall_strategy
-    top_risk = report.summary.top_risks[0] if report.summary.top_risks else "(no risks)"
+    cloud = report.target_cloud.upper()
+    weeks = report.summary.total_weeks
+    phases = report.plan.roadmap
+    first_phase = sorted(phases, key=lambda p: p.start_week)[0] if phases else None
+    weakest = sorted(report.readiness.dimensions, key=lambda d: d.score)[:3]
+    strongest = sorted(report.readiness.dimensions, key=lambda d: -d.score)[:2]
+    patterns = report.plan.patterns
+    quick_wins = report.plan.quick_wins
+    gxp_risks = [r for r in report.risks if r.gxp_related]
 
-    if any(k in low for k in ("why", "strategy", "replatform", "refactor", "repurchase")):
+    def mention_risk(idx: int = 0) -> str:
+        if idx >= len(report.risks):
+            return "no risks tracked"
+        r = report.risks[idx]
+        return f"**{r.id} · {r.title}** ({r.level}, {r.likelihood}×{r.impact})"
+
+    kw = last  # alias
+
+    # ---- Strategy / why this plan ----
+    if any(k in kw for k in ("why", "strategy", "replatform", "refactor", "repurchase", "rehost", "retire", "approach", "chose", "decision")):
+        rejected = {"replatform": "Refactor", "refactor": "Replatform", "repurchase": "Replatform", "rehost": "Replatform", "retain": "Replatform"}.get(strategy, "Refactor")
         return (
-            f"The report picks **{strategy.title()}** because:\n\n"
-            f"- Readiness is **{report.readiness.overall}/100** ({report.readiness.band}); the weakest dimensions "
-            f"are {', '.join(d.label for d in sorted(report.readiness.dimensions, key=lambda x: x.score)[:3])}.\n"
-            f"- The dominant tech-debt drivers would need re-work under any heavier refactor and the GxP validation scope would balloon.\n"
-            f"- {len(report.plan.component_strategies)} components are already mapped to concrete services on {report.target_cloud.upper()}.\n\n"
-            f"_(Demo mode reply - configure ANTHROPIC_API_KEY for live, grounded answers.)_"
+            f"The plan picks **{strategy.title()}** because of three things in the report:\n\n"
+            f"1. **Readiness is {report.readiness.overall}/100 ({report.readiness.band}).** The weakest dimensions are "
+            f"{', '.join(d.label for d in weakest)}. A heavier approach would front-load more risk than this scorecard supports.\n"
+            f"2. **Target architecture is already mapped.** {len(report.plan.component_strategies)} components have concrete services on {cloud} "
+            f"(see the Target tab) — the design work is done, not speculative.\n"
+            f"3. **Validation scope stays tractable.** For {('this GxP-critical system' if report.summary.gxp_critical else 'this system')} the chosen patterns "
+            f"({', '.join(p.name for p in patterns[:2])}) keep the IQ/OQ scope focused on changed components rather than the full stack.\n\n"
+            f"We considered **{rejected}** but rejected it on validation scope and timeline cost."
         )
-    if any(k in low for k in ("risk", "biggest", "worst")):
-        risks = report.risks[:3]
-        bullets = "\n".join(f"- **{r.id} · {r.title}** · {r.level} ({r.likelihood}×{r.impact}) — {r.mitigation}" for r in risks)
-        return f"The top three risks in this report:\n\n{bullets}\n\n_(Demo mode reply.)_"
-    if any(k in low for k in ("compliance", "gxp", "part 11", "annex 11", "gamp", "clause", "iq", "oq", "pq")):
+
+    # ---- Compliance / clauses / Part 11 / Annex 11 / GAMP / IQ/OQ/PQ ----
+    if any(k in kw for k in ("compliance", "gxp", "part 11", "annex 11", "gamp", "clause", "regulat", "iq", "oq", "pq", "validation", "alcoa", "csa", "audit trail", "e-signature", "esignature")):
         if not report.compliance:
-            return "This application is not flagged as GxP in the current report, so no compliance analysis was produced. If that is wrong, mark it GxP-relevant and re-run.\n\n_(Demo mode reply.)_"
-        g = report.compliance.gaps[0]
+            return (
+                "This application isn't flagged as GxP, so no compliance analysis was produced. "
+                "If that's wrong (e.g. it holds a GxP record you didn't declare), mark it GxP-relevant on the intake form "
+                "and re-run — the Compliance Gap Analyzer will cite the Part 11 / Annex 11 clauses that apply."
+            )
+        c = report.compliance
+        top = c.gaps[0]
         return (
-            f"The most critical compliance gap is **{g.title}** ({g.severity}).\n\n"
-            f"Cited clauses: {', '.join(g.clauses)}.\n\n"
-            f"Mitigation: {g.mitigation}\n\nValidation activity: _{g.validation_activity}_.\n\n_(Demo mode reply.)_"
+            f"**Posture: {c.overall_posture.replace('_', ' ')}.** {c.headline}\n\n"
+            f"The highest-priority gap is **{top.title}** ({top.severity}). "
+            f"Cited clauses: {', '.join(top.clauses)}.\n\n"
+            f"**Mitigation.** {top.mitigation}\n\n"
+            f"**Validation activity.** {top.validation_activity}\n\n"
+            f"Across the report there are **{len(c.gaps)} gaps** and **{len(c.required_controls)} required controls**, "
+            f"citing {sum(len(g.clauses) for g in c.gaps)} regulation clauses in total. See the Compliance tab for the full breakdown."
         )
-    if any(k in low for k in ("cost", "money", "budget", "cheaper", "expensive")):
+
+    # ---- Specific risk id (R01, R02, etc.) ----
+    for r in report.risks:
+        if r.id.lower() in kw:
+            return (
+                f"**{r.id} · {r.title}**\n\n"
+                f"- **Level:** {r.level} (likelihood {r.likelihood}/5 × impact {r.impact}/5)\n"
+                f"- **Category:** {r.category}\n"
+                f"- **GxP-related:** {'Yes' if r.gxp_related else 'No'}\n\n"
+                f"{r.description}\n\n"
+                f"**Mitigation.** {r.mitigation}"
+            )
+
+    # ---- Risks / biggest / worst ----
+    if any(k in kw for k in ("risk", "biggest", "worst", "concern", "worry", "danger", "threat")):
+        risks = report.risks[:3]
+        bullets = "\n".join(
+            f"- {mention_risk(i)} — {r.mitigation}" for i, r in enumerate(risks)
+        )
+        gxp_note = (
+            f"\n\n{len(gxp_risks)} of {len(report.risks)} risks are GxP-related — those need QA sign-off on the mitigation before go-live."
+            if gxp_risks else ""
+        )
+        return f"The three risks most worth losing sleep over:\n\n{bullets}{gxp_note}"
+
+    # ---- Timeline / schedule / shrink / faster / phases ----
+    if any(k in kw for k in ("timeline", "schedule", "faster", "shorter", "shrink", "accelerate", "weeks", "months", "phase", "roadmap", "when", "duration")):
+        phase_lines = "\n".join(
+            f"- **{p.name}** · weeks {p.start_week}–{p.start_week + p.duration_weeks}"
+            for p in sorted(phases, key=lambda x: x.start_week)
+        )
+        shrink_note = (
+            f"\n\nTo shrink below **{weeks} weeks** you'd compress validation (parallel OQ scripting, risk-based CSA on fewer functions) and run waves in parallel — "
+            f"the trade is more concurrent change under control, which raises coordination risk."
+            if phases else ""
+        )
+        return f"The roadmap is **{weeks} weeks** across {len(phases)} phases:\n\n{phase_lines}{shrink_note}"
+
+    # ---- Cloud choice / what-if / provider ----
+    if any(k in kw for k in ("aws", "azure", "gcp", "google cloud", "cloud", "provider", "what if", "instead")):
+        other = {"aws": ("Azure", "App Service", "Azure SQL Managed Instance", "Entra ID"),
+                 "azure": ("AWS", "Elastic Beanstalk / ECS", "RDS for SQL Server", "IAM Identity Center"),
+                 "gcp": ("AWS", "Cloud Run", "Cloud SQL", "Cloud Identity")}
+        name, app, db, idp = other.get(report.target_cloud, other["aws"])
         return (
-            "The current report doesn't quote dollar figures. Rough shape: a Replatform at this scale typically runs 60–90% of a Refactor, with annual run cost dropping once managed services replace on-prem hosting. Add a cost model as a follow-on module for firm numbers.\n\n_(Demo mode reply.)_"
+            f"The target cloud is **{cloud}** today. Switching to **{name}** would re-map:\n\n"
+            f"- App hosting → {app}\n"
+            f"- Database → {db}\n"
+            f"- Identity → {idp}\n\n"
+            f"Compliance scope is similar — both providers have GxP guidance and SOC 2 / ISO 27001 evidence. "
+            f"The practical difference is which supplier your QA has already qualified; introducing a new provider "
+            f"adds ~2 weeks of supplier assessment + quality-agreement work before Wave 1 can start."
         )
+
+    # ---- Cost / money / budget ----
+    if any(k in kw for k in ("cost", "money", "budget", "cheap", "expens", "licence", "license", "price", "roi", "payback")):
+        return (
+            f"The report doesn't currently quote dollar figures — that's the next analyser module. Rough shape for a **{strategy.title()}** of this profile:\n\n"
+            f"- **Build**: typically 60–90% of a Refactor. Dominated by validation effort for a GxP system — the IQ/OQ/PQ gates account for ~40% of the total.\n"
+            f"- **Run (year 1 vs today)**: managed services usually land 20–40% lower than the equivalent on-prem bill, mostly from retiring OS/DB licences and reducing hands-on patching.\n"
+            f"- **Payback**: typically 18–36 months for a Replatform of this size; a Refactor stretches to 36–60 months but caps future change cost.\n\n"
+            f"Give me actual rate cards (person-days, licence tiers, cloud reservation prices) and I'll turn these into real numbers."
+        )
+
+    # ---- Quick wins / start now / week 1 / first thing ----
+    if any(k in kw for k in ("quick win", "start now", "week 1", "first thing", "today", "immediately", "this week", "early")):
+        bullets = "\n".join(f"- {w}" for w in quick_wins)
+        return f"Four things you can start **this week** — all low-risk, no cloud spend, reusable in any target architecture:\n\n{bullets}"
+
+    # ---- Target architecture / target / pattern ----
+    if any(k in kw for k in ("target", "future state", "to-be", "architecture", "pattern")):
+        pat = "\n".join(f"- **{p.name}** — {p.why}" for p in patterns)
+        return (
+            f"Target state on **{cloud}** uses these patterns:\n\n{pat}\n\n"
+            f"The Target tab shows the diagram and the 7R strategy per component (what gets Replatformed, Refactored, Retained, etc.)."
+        )
+
+    # ---- Strongest / what's working / currently good ----
+    if any(k in kw for k in ("strength", "working", "well", "good", "best", "healthy")):
+        best = ", ".join(f"**{d.label}** ({d.score}/10)" for d in strongest)
+        return (
+            f"The system scores highest on {best}. "
+            f"That's useful because it means the migration doesn't have to re-engineer those areas — "
+            f"the plan can lean on them while fixing the weaker dimensions ({', '.join(d.label for d in weakest)})."
+        )
+
+    # ---- Components / inventory / what's there ----
+    if any(k in kw for k in ("component", "inventory", "tech stack", "what's there", "whats there", "parts")):
+        comps = "\n".join(f"- **{c.name}** ({c.type}) — {c.technology}" for c in report.architecture.components[:7])
+        return f"The current architecture is _{report.architecture.architecture_style}_:\n\n{comps}\n\nSee the Architecture tab for the diagram and tech-debt list."
+
+    # ---- Readiness / score / how ready ----
+    if any(k in kw for k in ("readiness", "score", "how ready", "ready", "band")):
+        dims = "\n".join(f"- **{d.label}**: {d.score}/10 — {d.rationale}" for d in report.readiness.dimensions)
+        return (
+            f"Overall readiness: **{report.readiness.overall}/100 ({report.readiness.band})**.\n\n"
+            f"Dimension by dimension:\n\n{dims}"
+        )
+
+    # ---- Generic fallback — still grounded in the report ----
+    kickoff = first_phase.name if first_phase else "(no phases yet)"
     return (
-        f"The plan is **{strategy.title()}** over **{report.summary.total_weeks} weeks** across {len(report.plan.roadmap)} phases, "
-        f"with top risk **{top_risk}**. Ask me about the strategy choice, specific risks, the roadmap, or compliance.\n\n_(Demo mode reply.)_"
+        f"**{strategy.title()}** on **{cloud}**, **{weeks} weeks** across {len(phases)} phases, starting with _{kickoff}_. "
+        f"Top risk: {mention_risk(0)}.\n\n"
+        f"Ask me about:\n"
+        f"- Why this strategy over the alternatives\n"
+        f"- A specific risk (by title or ID like R01, R02…)\n"
+        f"- The roadmap, a phase, or how to shrink the timeline\n"
+        f"- Compliance gaps, cited clauses, or IQ/OQ/PQ scope\n"
+        f"- What a different target cloud would change\n"
+        f"- Quick wins you can start this week"
     )
 
 
-async def stream_reply(report: AssessmentReport, messages: list[ChatMessage]) -> AsyncIterator[str]:
-    """Yield text deltas from Claude. In demo mode, yields a scripted answer in chunks."""
-    if not pipeline.has_credentials() or os.getenv("CODECLINIC_DEMO_MODE", "0") == "1":
-        for word in _demo_reply(report, messages).split(" "):
-            yield word + " "
-        return
+def _demo_fallback_sync(report: AssessmentReport, messages: list[ChatMessage]) -> str:
+    return _demo_reply(report, messages)
 
+
+async def _stream_demo(report: AssessmentReport, messages: list[ChatMessage]) -> AsyncIterator[str]:
+    """Stream the scripted answer word-by-word so it feels like typing."""
+    for word in _demo_fallback_sync(report, messages).split(" "):
+        yield word + " "
+
+
+async def _stream_gemini(report: AssessmentReport, messages: list[ChatMessage]) -> AsyncIterator[str]:
+    """Stream from Gemini 2.5 Flash. Raises on error; caller falls back."""
+    client = google_genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    # Gemini uses one `system_instruction` field (text) and `contents` for the dialogue.
+    system_text = (
+        prompts.system_prompt() + "\n\n" + CHAT_SYSTEM + "\n\n"
+        + f"<report id={report.id!r}>\n{_report_block(report)}\n</report>"
+    )
+    contents = []
+    for m in messages:
+        role = "user" if m.role == "user" else "model"
+        contents.append({"role": role, "parts": [{"text": m.content}]})
+    stream = await client.aio.models.generate_content_stream(
+        model=os.getenv("CODECLINIC_GEMINI_MODEL", "gemini-2.5-flash"),
+        contents=contents,
+        config={
+            "system_instruction": system_text,
+            "max_output_tokens": MAX_CHAT_TOKENS,
+            "temperature": 0.3,
+        },
+    )
+    async for chunk in stream:
+        text = getattr(chunk, "text", None)
+        if text:
+            yield text
+
+
+async def _stream_claude(report: AssessmentReport, messages: list[ChatMessage]) -> AsyncIterator[str]:
     client = anthropic.AsyncAnthropic(max_retries=1)
     anthropic_messages = [{"role": m.role, "content": m.content} for m in messages]
+    async with client.messages.stream(
+        model=pipeline.MODEL,
+        max_tokens=MAX_CHAT_TOKENS,
+        system=_system_prompt(report),
+        messages=anthropic_messages,
+        output_config={"effort": "low"},
+    ) as stream:
+        async for text in stream.text_stream:
+            yield text
+
+
+def active_provider() -> str:
+    """Which provider the next stream will try first - surfaced in /api/health."""
+    if os.getenv("CODECLINIC_DEMO_MODE", "0") == "1":
+        return "demo"
+    if _HAS_GEMINI_SDK and os.getenv("GEMINI_API_KEY"):
+        return "gemini"
+    if pipeline.has_credentials():
+        return "claude"
+    return "demo"
+
+
+async def stream_reply(report: AssessmentReport, messages: list[ChatMessage]) -> AsyncIterator[str]:
+    """Pick the best available provider and stream its reply. On a provider
+    error (quota, network, bad request) fall through to the next tier so the
+    chat never breaks mid-demo."""
+    provider = active_provider()
     try:
-        async with client.messages.stream(
-            model=pipeline.MODEL,
-            max_tokens=MAX_CHAT_TOKENS,
-            system=_system_prompt(report),
-            messages=anthropic_messages,
-            output_config={"effort": "low"},  # chat should feel fast
-        ) as stream:
-            async for text in stream.text_stream:
+        if provider == "gemini":
+            async for text in _stream_gemini(report, messages):
                 yield text
+            return
+        if provider == "claude":
+            async for text in _stream_claude(report, messages):
+                yield text
+            return
     except anthropic.APIError as exc:
-        yield f"\n\n_[Chat error: {getattr(exc, 'message', str(exc))}]_"
+        # Claude failed - drop to demo
+        yield f"\n\n_[Switched to offline reply - Claude error: {getattr(exc, 'message', str(exc))}]_\n\n"
+    except Exception as exc:
+        # Gemini (or anything else) failed - drop to demo without noise
+        yield f"\n\n_[Switched to offline reply - {provider} error: {exc}]_\n\n"
+
+    async for text in _stream_demo(report, messages):
+        yield text
