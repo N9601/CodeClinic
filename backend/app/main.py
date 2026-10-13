@@ -40,6 +40,7 @@ STAGE_LABELS = {
     "assess": "Assessing readiness & risks",
     "recommend": "Designing target architecture & roadmap",
     "assemble": "Compiling report",
+    "compliance": "Mapping regulatory clauses",
 }
 
 # Map an uploaded PDF's filename stem to the sample it corresponds to, so demo
@@ -108,7 +109,10 @@ async def _noop_emit(stage: str, status: str) -> None:
 
 async def _serve_cached(request: AssessRequest, cached: AssessmentReport, emit) -> AssessmentReport:
     first_stage = "extract" if request.extraction is not None else "analyze"
-    for stage in (first_stage, "assess", "recommend", "assemble"):
+    stages = [first_stage, "assess", "recommend", "assemble"]
+    if cached.compliance is not None:
+        stages.append("compliance")
+    for stage in stages:
         await emit(stage, "started")
         await asyncio.sleep(CACHED_STAGE_DELAY)
         await emit(stage, "done")
