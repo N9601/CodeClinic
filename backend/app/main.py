@@ -338,60 +338,6 @@ async def assess_stream(request: AssessRequest) -> StreamingResponse:
     )
 
 
-class RecentReport(BaseModel):
-    """Compact row for the Recent Assessments list on the Intake screen."""
-    id: str
-    name: str
-    strategy: str
-    readiness: int
-    readiness_band: str
-    weeks: int
-    gxp_critical: bool
-    target_cloud: str
-    generated_at: str
-    source_document: str | None = None
-    mode: str
-
-
-@app.get("/api/reports")
-def list_reports(limit: int = 20) -> list[RecentReport]:
-    """List saved assessment reports (data/reports/*.json), newest first.
-    Does not include cached sample reports."""
-    files = sorted(REPORTS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
-    rows: list[RecentReport] = []
-    for path in files[:limit]:
-        try:
-            report = AssessmentReport.model_validate_json(path.read_text(encoding="utf-8"))
-        except Exception:
-            continue  # skip corrupt files silently - a bad JSON shouldn't break the list
-        rows.append(RecentReport(
-            id=report.id,
-            name=report.profile.name,
-            strategy=report.plan.overall_strategy,
-            readiness=report.readiness.overall,
-            readiness_band=report.readiness.band,
-            weeks=report.summary.total_weeks,
-            gxp_critical=report.summary.gxp_critical,
-            target_cloud=report.target_cloud,
-            generated_at=report.generated_at,
-            source_document=report.source_document,
-            mode=report.mode,
-        ))
-    return rows
-
-
-@app.delete("/api/reports/{report_id}")
-def delete_report(report_id: str) -> dict:
-    """Delete a saved report. Refuses to touch cached sample reports."""
-    if report_id.startswith("sample-"):
-        raise HTTPException(400, "Cached sample reports cannot be deleted")
-    path = REPORTS_DIR / f"{report_id}.json"
-    if not path.exists():
-        raise HTTPException(404, f"Report {report_id} not found")
-    path.unlink()
-    return {"ok": True, "deleted": report_id}
-
-
 @app.get("/api/reports/{report_id}")
 def get_report(report_id: str) -> AssessmentReport:
     return _load_report(report_id)
