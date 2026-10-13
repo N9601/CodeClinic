@@ -1,19 +1,22 @@
 // CodeClinic single-page state machine: intake -> running -> report.
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getSamples } from './api'
+import { Layers, Stethoscope } from 'lucide-react'
+import { getReport, getSamples } from './api'
 import { Header } from './components/Header'
+import { cx } from './components/ui'
 import { useHealth } from './hooks/useHealth'
 import { runAssessment, STAGE_ORDER, STAGE_RANK } from './lib/runAssessment'
 import type { RunResult } from './lib/runAssessment'
 import { MOCK_REPORT, MOCK_SAMPLES } from './mock'
 import { INITIAL_INTAKE, Intake } from './screens/Intake'
 import type { IntakeState } from './screens/Intake'
+import { Portfolio } from './screens/Portfolio'
 import { Report } from './screens/Report'
 import { INITIAL_STAGES, Running } from './screens/Running'
 import type { StageMap } from './screens/Running'
 import type { AssessRequest, SampleSummary, StageEvent, StageName } from './types'
 
-type Screen = 'intake' | 'running' | 'report'
+type Screen = 'intake' | 'running' | 'report' | 'portfolio'
 
 interface RunState {
   stages: StageMap
@@ -87,6 +90,24 @@ export default function App() {
     window.scrollTo({ top: 0 })
   }, [])
 
+  const goPortfolio = useCallback(() => {
+    abortRef.current?.abort()
+    abortRef.current = null
+    setScreen('portfolio')
+    window.scrollTo({ top: 0 })
+  }, [])
+
+  const openReportById = useCallback(async (reportId: string) => {
+    try {
+      const report = await getReport(reportId)
+      setResult({ report, source: 'post' })
+      setScreen('report')
+      window.scrollTo({ top: 0 })
+    } catch (err) {
+      console.error('Failed to open report', err)
+    }
+  }, [])
+
   async function startRun() {
     abortRef.current?.abort()
     const ctrl = new AbortController()
@@ -141,10 +162,24 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--color-teal-50)_0%,_transparent_55%)]">
       <Header health={health} onHome={screen === 'running' ? undefined : goIntake} />
+      {screen !== 'running' && (
+        <div className="no-print border-b border-slate-200/60 bg-white/60">
+          <nav className="mx-auto flex max-w-7xl items-center gap-1 px-4 py-2 sm:px-6 lg:px-8" aria-label="Primary">
+            <NavTab
+              icon={Stethoscope}
+              label="Single-app assessment"
+              active={screen === 'intake' || screen === 'report'}
+              onClick={goIntake}
+            />
+            <NavTab icon={Layers} label="Portfolio" active={screen === 'portfolio'} onClick={goPortfolio} />
+          </nav>
+        </div>
+      )}
       <main>
         {screen === 'intake' && (
           <Intake state={intake} onChange={setIntake} samples={samples} health={health} onRun={startRun} />
         )}
+        {screen === 'portfolio' && <Portfolio onOpenReport={openReportById} />}
         {screen === 'running' && (
           <Running
             appName={
@@ -172,5 +207,31 @@ export default function App() {
         architects and QA before use in a validated environment.
       </footer>
     </div>
+  )
+}
+
+function NavTab({
+  icon: Icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: typeof Stethoscope
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cx(
+        'inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
+        active ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+      )}
+    >
+      <Icon className="size-3.5" aria-hidden />
+      {label}
+    </button>
   )
 }
