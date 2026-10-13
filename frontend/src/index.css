@@ -166,11 +166,12 @@ body {
 /* Chat markdown bubbles — lightweight typography without the Tailwind plugin. */
 .cc-chat-md > :first-child { margin-top: 0; }
 .cc-chat-md > :last-child { margin-bottom: 0; }
-.cc-chat-md p { margin: 0.5rem 0; line-height: 1.55; }
-.cc-chat-md ul, .cc-chat-md ol { margin: 0.5rem 0; padding-left: 1.25rem; }
+.cc-chat-md p { margin: 0.4rem 0; line-height: 1.55; }
+.cc-chat-md ul, .cc-chat-md ol { margin: 0.3rem 0; padding-left: 1.15rem; }
 .cc-chat-md ul { list-style: disc; }
 .cc-chat-md ol { list-style: decimal; }
-.cc-chat-md li { margin: 0.2rem 0; }
+.cc-chat-md li { margin: 0.1rem 0; line-height: 1.45; }
+.cc-chat-md li > p { margin: 0; }
 .cc-chat-md h1, .cc-chat-md h2, .cc-chat-md h3, .cc-chat-md h4 {
   font-weight: 700; margin: 0.65rem 0 0.3rem;
   color: #0f172a;

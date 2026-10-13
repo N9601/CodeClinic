@@ -3,10 +3,22 @@ import { MessageSquare, RefreshCw, Send, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { ApiError, fetchChatSeeds, streamChat } from '../../api'
+import { ApiError, fetchChatSeeds, getHealth, streamChat } from '../../api'
 import type { AssessmentReport, ChatMessage, ChatSeed } from '../../types'
+import { Logo } from '../brand/Logo'
 import { SectionHeader } from '../brand/SectionHeader'
 import { Button, cx, Spinner } from '../ui'
+
+type ChatProvider = 'claude' | 'gemini' | 'demo'
+
+// Cached per panel lifetime — fetched on first mount.
+let cachedProvider: ChatProvider | null = null
+
+function providerLabel(p: ChatProvider | null): string {
+  if (p === 'gemini') return 'Powered by Gemini Flash'
+  if (p === 'demo') return 'Running offline — demo mode'
+  return 'Powered by Claude'
+}
 
 const STORAGE_PREFIX = 'cc-chat:'
 
@@ -32,6 +44,7 @@ function saveMessages(reportId: string, messages: ChatMessage[]) {
 
 export function ChatPanel({ report }: { report: AssessmentReport }) {
   const [open, setOpen] = useState(false)
+  const [provider, setProvider] = useState<ChatProvider | null>(cachedProvider)
   const [messages, setMessages] = useState<ChatMessage[]>(() => loadMessages(report.id))
   const [seeds, setSeeds] = useState<ChatSeed[] | null>(null)
   const [seedsError, setSeedsError] = useState<string | null>(null)
@@ -41,6 +54,27 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
   const [messageError, setMessageError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Fetch chat provider once per panel lifetime; the shape is a superset of HealthResponse.
+  useEffect(() => {
+    if (cachedProvider !== null) return
+    let cancelled = false
+    getHealth()
+      .then((h) => {
+        const p = (h as unknown as { chat_provider?: string }).chat_provider
+        const next: ChatProvider = p === 'gemini' ? 'gemini' : p === 'demo' ? 'demo' : 'claude'
+        cachedProvider = next
+        if (!cancelled) setProvider(next)
+      })
+      .catch(() => {
+        // Backend unreachable → treat as offline/demo for the footer copy.
+        cachedProvider = 'demo'
+        if (!cancelled) setProvider('demo')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // Reset state when the report id changes.
   useEffect(() => {
@@ -176,7 +210,7 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
       {/* Panel */}
       <div
         className={cx(
-          'no-print fixed inset-y-0 right-0 z-50 flex w-full max-w-[380px] flex-col border-l border-slate-200 bg-white shadow-2xl transition-transform duration-250 ease-out',
+          'no-print fixed inset-0 z-50 flex flex-col border-l border-slate-200 bg-white shadow-2xl transition-transform duration-250 ease-out sm:inset-y-0 sm:left-auto sm:right-0 sm:w-full sm:max-w-[380px]',
           open ? 'translate-x-0' : 'translate-x-full pointer-events-none',
         )}
         role="dialog"
@@ -228,9 +262,12 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
         {/* Messages */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
           {messages.length === 0 ? (
-            <p className="mt-6 text-center text-sm text-slate-500">
-              Ask anything about this report — strategy, risks, timeline, compliance.
-            </p>
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 text-center">
+              <Logo size={96} className="opacity-30" />
+              <p className="max-w-[260px] text-sm text-slate-500">
+                Ask anything about this report — strategy, risks, timeline, compliance.
+              </p>
+            </div>
           ) : (
             <div className="space-y-3">
               {messages.map((m, i) => {
@@ -282,7 +319,7 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
             </button>
           </div>
           <p className="mt-2 text-center text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400">
-            powered by Claude
+            {providerLabel(provider)}
           </p>
         </div>
       </div>
