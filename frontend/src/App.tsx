@@ -177,7 +177,7 @@ export default function App() {
       )}
       <main>
         {screen === 'intake' && (
-          <Intake state={intake} onChange={setIntake} samples={samples} health={health} onRun={startRun} />
+          <Intake state={intake} onChange={setIntake} samples={samples} health={health} onRun={startRun} onOpenReport={openReportById} />
         )}
         {screen === 'portfolio' && <Portfolio onOpenReport={openReportById} />}
         {screen === 'running' && (

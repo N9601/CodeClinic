@@ -8,6 +8,7 @@ import { StepStrip } from '../components/brand/StepStrip'
 import { TrustBand } from '../components/brand/TrustBand'
 import { CloudPicker } from '../components/intake/CloudPicker'
 import { ProfileForm } from '../components/intake/ProfileForm'
+import { RecentAssessments } from '../components/intake/RecentAssessments'
 import { EMPTY_UPLOAD, UploadPanel } from '../components/intake/UploadPanel'
 import type { UploadState } from '../components/intake/UploadPanel'
 import { ZipDropZone } from '../components/intake/ZipDropZone'
@@ -54,10 +55,12 @@ export function Intake({
   samples: _samples,
   health,
   onRun,
+  onOpenReport,
 }: {
   state: IntakeState
   onChange: (next: IntakeState) => void
   samples: SampleSummary[] | null
+  onOpenReport?: (reportId: string) => void
   health: HealthState
   onRun: () => void
 }) {
@@ -147,6 +150,8 @@ export function Intake({
 
       {/* Intake content */}
       <div ref={intakeRef} className="mx-auto max-w-6xl px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+        {onOpenReport && <RecentAssessments onOpen={onOpenReport} />}
+
         <div className="mb-6">
           <SectionHeader
             eyebrow="Start here"
