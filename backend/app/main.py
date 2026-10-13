@@ -10,6 +10,7 @@ and fall back to the cached sample if the live run fails, so the demo can't die.
 import asyncio
 import json
 import os
+import re
 import uuid
 from pathlib import Path
 
@@ -35,6 +36,8 @@ class PortfolioRequest(BaseModel):
 SAMPLES = BACKEND / "samples"
 REPORTS_DIR = BACKEND / "data" / "reports"
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+CHATS_DIR = BACKEND / "data" / "chats"
+CHATS_DIR.mkdir(parents=True, exist_ok=True)
 DEMO_MODE = os.getenv("CODECLINIC_DEMO_MODE", "0") == "1"
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 CACHED_STAGE_DELAY = 0.7  # seconds per stage when replaying a cached report
@@ -328,6 +331,60 @@ async def assess_stream(request: AssessRequest) -> StreamingResponse:
     )
 
 
+class RecentReport(BaseModel):
+    """Compact row for the Recent Assessments list on the Intake screen."""
+    id: str
+    name: str
+    strategy: str
+    readiness: int
+    readiness_band: str
+    weeks: int
+    gxp_critical: bool
+    target_cloud: str
+    generated_at: str
+    source_document: str | None = None
+    mode: str
+
+
+@app.get("/api/reports")
+def list_reports(limit: int = 20) -> list[RecentReport]:
+    """List saved assessment reports (data/reports/*.json), newest first.
+    Does not include cached sample reports."""
+    files = sorted(REPORTS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    rows: list[RecentReport] = []
+    for path in files[:limit]:
+        try:
+            report = AssessmentReport.model_validate_json(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue  # skip corrupt files silently - a bad JSON shouldn't break the list
+        rows.append(RecentReport(
+            id=report.id,
+            name=report.profile.name,
+            strategy=report.plan.overall_strategy,
+            readiness=report.readiness.overall,
+            readiness_band=report.readiness.band,
+            weeks=report.summary.total_weeks,
+            gxp_critical=report.summary.gxp_critical,
+            target_cloud=report.target_cloud,
+            generated_at=report.generated_at,
+            source_document=report.source_document,
+            mode=report.mode,
+        ))
+    return rows
+
+
+@app.delete("/api/reports/{report_id}")
+def delete_report(report_id: str) -> dict:
+    """Delete a saved report. Refuses to touch cached sample reports."""
+    if report_id.startswith("sample-"):
+        raise HTTPException(400, "Cached sample reports cannot be deleted")
+    path = REPORTS_DIR / f"{report_id}.json"
+    if not path.exists():
+        raise HTTPException(404, f"Report {report_id} not found")
+    path.unlink()
+    return {"ok": True, "deleted": report_id}
+
+
 @app.get("/api/reports/{report_id}")
 def get_report(report_id: str) -> AssessmentReport:
     return _load_report(report_id)
@@ -352,6 +409,46 @@ def portfolio_from_samples() -> portfolio.PortfolioView:
 @app.get("/api/reports/{report_id}/chat/seeds")
 def chat_seeds(report_id: str) -> chat.ChatSeedResponse:
     return chat.seed_questions(_load_report(report_id))
+
+
+def _chat_history_path(report_id: str) -> Path:
+    # Reject suspicious ids (we only ever generate hex ids or 'sample-...')
+    safe = re.sub(r"[^A-Za-z0-9_-]", "", report_id)[:64]
+    return CHATS_DIR / f"{safe}.json"
+
+
+class ChatHistory(BaseModel):
+    messages: list[chat.ChatMessage]
+
+
+@app.get("/api/reports/{report_id}/chat/history")
+def chat_history(report_id: str) -> ChatHistory:
+    """Load saved chat history for a report. Returns empty list if none."""
+    _load_report(report_id)  # 404 if report doesn't exist
+    path = _chat_history_path(report_id)
+    if not path.exists():
+        return ChatHistory(messages=[])
+    try:
+        return ChatHistory.model_validate_json(path.read_text(encoding="utf-8"))
+    except Exception:
+        return ChatHistory(messages=[])
+
+
+@app.put("/api/reports/{report_id}/chat/history")
+def save_chat_history(report_id: str, history: ChatHistory) -> dict:
+    """Persist the full chat message list for this report. Called by the client
+    after every exchange so page reloads and 'open past assessment' preserve chat."""
+    _load_report(report_id)  # 404 if report doesn't exist
+    _chat_history_path(report_id).write_text(history.model_dump_json(indent=2), encoding="utf-8")
+    return {"ok": True, "message_count": len(history.messages)}
+
+
+@app.delete("/api/reports/{report_id}/chat/history")
+def clear_chat_history(report_id: str) -> dict:
+    path = _chat_history_path(report_id)
+    if path.exists():
+        path.unlink()
+    return {"ok": True}
 
 
 @app.post("/api/chat")
