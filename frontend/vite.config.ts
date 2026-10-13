@@ -5,6 +5,10 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    // mermaid lazily loads large diagram chunks; this is a local demo app
+    chunkSizeWarningLimit: 2000,
+  },
   server: {
     port: 5173,
     proxy: {
