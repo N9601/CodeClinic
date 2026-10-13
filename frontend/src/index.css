@@ -20,9 +20,9 @@ body {
   min-height: 100vh;
 }
 
-/* Mermaid SVGs: keep them responsive inside their scroll container */
+/* Mermaid SVGs: mermaid sets width=100% + an inline max-width (natural size),
+   so diagrams fit their container and never upscale. */
 .mermaid-host svg {
-  max-width: none;
   height: auto;
   margin: 0 auto;
   display: block;
