@@ -76,6 +76,28 @@ concrete mitigation. Spread them across categories and calibrate honestly - not 
 critical.
 - opportunities: 3-6 tangible benefits of modernizing, each with an effort level."""
 
+COMPLIANCE = """Stage 4 (optional) - compliance gap analysis.
+
+The input is the full modernization report (architecture, scored risks, 7R \
+strategy, target architecture, roadmap). Produce a ComplianceAnalysis grounded \
+in the regulation_clauses knowledge base.
+
+- gaps: 4-8 concrete compliance gaps the migration creates or exposes. For each: \
+link it to the risk ids (R01, R02, ...) and component ids it touches. Cite only \
+clause IDs that EXACTLY match the knowledge base (e.g. '21 CFR 11.10(e)', \
+'Annex 11 §9', 'GAMP 5 §D4'). Do not invent clause numbers.
+- required_controls: 4-7 controls the target architecture must implement, each \
+tied to the clauses it satisfies.
+- validation_strategy: 2-4 sentences for a QA/CSV lead, naming CSA, IQ/OQ/PQ \
+and periodic review as appropriate.
+- overall_posture: 'low_risk' only for non-GxP, non-personal-data systems; \
+'manageable' for the usual GxP replatform / phased refactor; 'elevated_risk' \
+when the plan creates new data-integrity or validated-state concerns.
+
+Skip this stage entirely (return empty gaps + controls, posture='low_risk', \
+headline naming it as non-GxP) only when the input is clearly not regulated."""
+
+
 RECOMMEND = """Stage 3 of 3 - recommend the target architecture and migration roadmap.
 
 Target cloud: {cloud}. Name concrete managed services from that cloud only.
