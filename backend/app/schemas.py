@@ -77,6 +77,38 @@ class AssessRequest(BaseModel):
     signals: list[Signal] = Field(default_factory=list)
     target_cloud: CloudProvider = "azure"
     mode: Literal["auto", "live", "cached"] = "auto"
+    extraction: "ExtractionResult | None" = Field(
+        default=None,
+        description="Set when the request originated from a document ingest; the pipeline reuses "
+        "its ArchitectureAnalysis instead of re-running the analyze stage.",
+    )
+
+
+# --------------------------------------------------------------------------- stage 0: extract (PDF ingest)
+
+
+class ExtractedProfile(AppProfile):
+    """AppProfile the extractor produced, with provenance so the UI can show
+    where each field came from in the uploaded report."""
+
+    source_pages: dict[str, str] = Field(
+        default_factory=dict,
+        description="map of AppProfile field name -> short page/section citation, e.g. 'business_function' -> 'p.3 §2.1'",
+    )
+    confidence: Literal["high", "medium", "low"] = "medium"
+    confidence_notes: str = ""
+
+
+class ExtractionResult(BaseModel):
+    """Output of stage 0 when the user uploads an assessment document.
+    The analysis is a first pass straight from the document - the assess and
+    recommend stages still run on top of it."""
+
+    document_title: str
+    document_summary: str = Field(description="2-3 sentences summarising what the report covers.")
+    pages_estimated: int = Field(description="estimated page count of the uploaded document, best effort")
+    profile: ExtractedProfile
+    analysis: "ArchitectureAnalysis"
 
 
 # --------------------------------------------------------------------------- stage 1: analyze
@@ -248,3 +280,12 @@ class AssessmentReport(BaseModel):
     opportunities: list[Opportunity]
     plan: ModernizationPlan
     diagrams: Diagrams
+    source_document: str | None = Field(
+        default=None,
+        description="Original filename of the uploaded assessment document, if the report came from an ingest.",
+    )
+    extraction_confidence: Literal["high", "medium", "low"] | None = None
+
+
+AssessRequest.model_rebuild()
+ExtractionResult.model_rebuild()
