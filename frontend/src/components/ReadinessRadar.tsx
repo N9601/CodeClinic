@@ -87,7 +87,7 @@ export function ReadinessRadar({
   return (
     <div style={{ width: '100%', height }} role="img" aria-label="Readiness radar chart">
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={dimensions} outerRadius="68%" margin={{ top: 16, right: 40, bottom: 16, left: 40 }}>
+        <RadarChart data={dimensions} outerRadius="72%" margin={{ top: 16, right: 40, bottom: 16, left: 40 }}>
           <PolarGrid stroke="#e2e8f0" />
           <PolarAngleAxis dataKey="label" tick={(props: TickProps) => <AngleTick {...props} />} />
           <PolarRadiusAxis

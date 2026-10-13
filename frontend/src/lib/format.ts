@@ -186,7 +186,10 @@ export const EFFORT_STYLE: Record<Effort, { label: string; badge: string }> = {
   high: { label: 'High effort', badge: 'bg-rose-50 text-rose-700 ring-rose-200' },
 }
 
+const ACRONYMS: Record<string, string> = { os: 'OS', api: 'API', ui: 'UI', sql: 'SQL', etl: 'ETL' }
+
 export function titleCase(s: string): string {
+  if (ACRONYMS[s.toLowerCase()]) return ACRONYMS[s.toLowerCase()]
   return s
     .replace(/_/g, ' ')
     .replace(/\s+/g, ' ')
