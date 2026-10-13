@@ -1,0 +1,8 @@
+LabTrack manual deployment checklist (v3.8)
+
+1. Build LabTrack.sln in Release on the build PC (Visual Studio 2013).
+2. Copy the published site to \\labweb01\c$\inetpub\LabTrack and \\labweb02\c$\inetpub\LabTrack.
+3. Run the database change scripts in SSMS against the LabTrack database.
+4. Restart the "LabTrack Instrument Service" on labint01.
+5. Execute IQ checklist (paper form QA-IQ-017) and attach screenshots.
+6. Execute the OQ regression scripts (about 300 scripts, paper-based) before QA release.

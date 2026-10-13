@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{6A1F3C2E-9B4D-4E21-8F6A-1C2D3E4F5A6B}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>LabTrack.Web</RootNamespace>
+    <AssemblyName>LabTrack.Web</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <UseIISExpress>false</UseIISExpress>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Web" />
+    <Reference Include="System.Data" />
+    <Reference Include="CrystalDecisions.CrystalReports.Engine, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304" />
+    <Reference Include="CrystalDecisions.Shared, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304" />
+    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Global.asax" />
+    <Content Include="SampleEntry.aspx" />
+    <Content Include="Reports\CertificateOfAnalysis.rpt" />
+    <Compile Include="SampleEntry.aspx.cs" />
+    <Compile Include="Data\ResultRepository.cs" />
+  </ItemGroup>
+</Project>
