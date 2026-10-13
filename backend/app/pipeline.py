@@ -150,6 +150,7 @@ async def run(request: AssessRequest, emit: Emit) -> AssessmentReport:
         plan=plan,
         mode="live",
         model=MODEL,
+        compliance=None,
     )
     if request.extraction is not None:
         report.source_document = request.extraction.document_title

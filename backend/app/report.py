@@ -10,6 +10,7 @@ from .schemas import (
     ArchitectureAnalysis,
     AssessmentReport,
     CloudProvider,
+    ComplianceAnalysis,
     Diagrams,
     ModernizationPlan,
     ReadinessAssessment,
@@ -28,6 +29,7 @@ def assemble(
     plan: ModernizationPlan,
     mode: str,
     model: str,
+    compliance: ComplianceAnalysis | None = None,
 ) -> AssessmentReport:
     readiness = scoring.score_readiness(assessment.dimensions)
     risks = scoring.score_risks(assessment.risks)
@@ -63,4 +65,5 @@ def assemble(
         opportunities=assessment.opportunities,
         plan=plan,
         diagrams=diagrams,
+        compliance=compliance,
     )

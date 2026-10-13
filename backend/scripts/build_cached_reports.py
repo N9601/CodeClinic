@@ -14,7 +14,7 @@ BACKEND = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND))
 
 from app.report import assemble  # noqa: E402
-from app.schemas import AppProfile, ArchitectureAnalysis, ModernizationPlan, ReadinessAssessment  # noqa: E402
+from app.schemas import AppProfile, ArchitectureAnalysis, ComplianceAnalysis, ModernizationPlan, ReadinessAssessment  # noqa: E402
 
 SAMPLES = BACKEND / "samples"
 MODEL = "claude-opus-5-5"
@@ -25,6 +25,7 @@ def main() -> None:
         sample_id = fixture_path.name.removesuffix(".stages.json")
         fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
         sample = json.loads((SAMPLES / "profiles" / f"{sample_id}.json").read_text(encoding="utf-8"))
+        compliance = ComplianceAnalysis(**fixture["compliance"]) if fixture.get("compliance") else None
         report = assemble(
             profile=AppProfile(**sample["profile"]),
             target_cloud=fixture.get("target_cloud", "azure"),
@@ -34,6 +35,7 @@ def main() -> None:
             plan=ModernizationPlan(**fixture["plan"]),
             mode="cached",
             model=MODEL,
+            compliance=compliance,
         )
         report.id = f"sample-{sample_id}"
         out = SAMPLES / "reports" / f"{sample_id}.json"
