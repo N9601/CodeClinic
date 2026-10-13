@@ -58,11 +58,11 @@ Open http://localhost:5173. The header pill shows **Live · Claude** when a key 
 - **Auto fallback** — if a live run fails and the sample has a cached report, the cached report is served.
 
 ### Pre-generating demo reports
-LabTrack LIMS ships with a hand-built cached report. Once you have a key, cache the other samples so the whole demo works offline:
+All three samples ship with hand-built cached reports (from `samples/fixtures/`), so the whole demo works offline: LabTrack LIMS → Replatform, TrialHub CTMS → Refactor, RepConnect → Repurchase. Once you have a key you can replace them with real Claude output:
 
 ```bash
 cd backend
-python scripts/generate_sample_reports.py
+python scripts/generate_sample_reports.py --all
 ```
 
 Other scripts: `scripts/build_cached_reports.py` (rebuild reports from `samples/fixtures/`), `scripts/make_demo_zips.py` (rebuild the upload-demo zips and print what the scanner finds).
