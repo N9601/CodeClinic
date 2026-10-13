@@ -1,0 +1,30 @@
+# The 7 Rs of cloud migration, with pharma-specific guidance.
+strategies:
+  retire:
+    definition: Decommission the component; its function is no longer needed or is absorbed elsewhere.
+    use_when: Duplicate capability, low usage, or replaced by a managed service.
+    pharma_notes: Archive GxP records per retention policy (often 10-25 years) in a readable, validated archive before decommissioning; document in a decommissioning report.
+  retain:
+    definition: Keep as-is for now (on-premises or current host); revisit later.
+    use_when: Out of scope, vendor-owned, hardware-bound (lab instruments), or blocked by a near-term regulatory event.
+    pharma_notes: Common for instrument-attached systems (CDS, MES on the shop floor) and systems in database lock or under inspection.
+  rehost:
+    definition: Lift-and-shift to cloud VMs with no code changes.
+    use_when: Urgent data-centre exit or EOL hardware, app is stable, little appetite for change.
+    pharma_notes: Lowest re-validation scope (mainly IQ on new infrastructure plus regression OQ), but carries EOL software forward.
+  relocate:
+    definition: Move a virtualised estate wholesale (e.g. VMware to a cloud VMware service) without changing VMs.
+    use_when: Large VMware estates with a hard deadline.
+    pharma_notes: Similar validation scope to rehost; does not fix EOL operating systems.
+  replatform:
+    definition: Lift-tinker-and-shift - move to managed platform services (managed DB, app hosting, containers) with minimal code change.
+    use_when: EOL OS/DB but sound application logic; want operational gains without a rewrite.
+    pharma_notes: The usual sweet spot for validated systems - re-validation focuses on IQ plus targeted OQ for changed components; managed services shift patching to the provider (document in the shared-responsibility matrix).
+  repurchase:
+    definition: Replace with a SaaS or commercial product.
+    use_when: Commodity capability (CRM, email, document management), custom code adds no differentiation.
+    pharma_notes: Requires supplier assessment/audit of the SaaS vendor and a quality agreement if GxP; vendor validation packages can reduce effort.
+  refactor:
+    definition: Re-architect for cloud-native (microservices, serverless, event-driven), changing code significantly.
+    use_when: Scalability, agility or release-speed needs justify the cost; strong team and test coverage.
+    pharma_notes: Highest re-validation scope; use risk-based CSA, automated testing and incremental strangler-fig releases to keep each validation increment small.
