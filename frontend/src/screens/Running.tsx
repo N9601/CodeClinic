@@ -87,11 +87,11 @@ export function Running({
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:py-14 cc-fade-in">
       <div className="mb-6 text-center">
-        <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-linear-to-br from-teal-500 to-emerald-600 text-white shadow-lg shadow-teal-600/25">
+        <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-600/25">
           {error ? <CircleX className="size-7" aria-hidden /> : <Spinner className="size-7 text-white" />}
         </div>
         <SectionHeader
-          eyebrow={error ? '[ Interrupted ]' : '[ In progress ]'}
+          eyebrow={error ? 'Interrupted' : 'In progress'}
           title={error ? 'Diagnosis interrupted' : `Diagnosing ${appName}`}
           align="center"
           size="md"

@@ -25,7 +25,7 @@ const POSTURE_DOT: Record<CompliancePosture, string> = {
 }
 
 const CHIP_CLASS =
-  'inline-flex items-center rounded-md border border-emerald-200 bg-white px-2 py-0.5 font-display tracking-wide text-xs text-emerald-700 transition-colors hover:bg-emerald-50'
+  'inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50/60 px-2 py-0.5 text-[11px] font-medium tracking-tight text-emerald-700 transition-colors hover:bg-emerald-50'
 
 const EYEBROW_CLASS = 'text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500'
 
@@ -63,15 +63,15 @@ export function ComplianceTab({ report }: { report: AssessmentReport }) {
   return (
     <div className="space-y-6">
       <SectionHeader
-        eyebrow="[ COMPLIANCE EVIDENCE ]"
-        title="REGULATORY GAP ANALYSIS"
+        eyebrow="Compliance evidence"
+        title="Regulatory gap analysis"
         subtitle={compliance.headline}
       />
 
       <div className="flex flex-wrap items-center gap-3">
         <span
           className={cx(
-            'inline-flex items-center gap-2 rounded-full px-4 py-1.5 font-display text-base uppercase tracking-[0.14em] ring-1 ring-inset',
+            'inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-tight ring-1 ring-inset',
             posture.className,
           )}
         >
@@ -91,7 +91,7 @@ export function ComplianceTab({ report }: { report: AssessmentReport }) {
 
       {frameworks.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="annotation">[ FILTER BY FRAMEWORK ]</span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Filter by framework</span>
           <FrameworkChip label="All" active={framework === 'All'} onClick={() => setFramework('All')} />
           {frameworks.map((f) => (
             <FrameworkChip key={f} label={f} active={framework === f} onClick={() => setFramework(f)} />
