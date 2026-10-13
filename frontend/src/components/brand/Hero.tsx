@@ -46,7 +46,7 @@ export function Hero({
         </div>
 
         {/* Headline */}
-        <h1 className="mx-auto max-w-5xl font-display text-5xl font-bold uppercase leading-[0.9] tracking-[-0.03em] text-slate-900 md:text-7xl lg:text-8xl">
+        <h1 className="mx-auto max-w-5xl font-display text-3xl font-bold uppercase leading-[0.95] tracking-[-0.03em] text-slate-900 sm:text-5xl sm:leading-[0.9] md:text-7xl lg:text-8xl">
           Diagnose Legacy Pharma Apps.
           <span className="block text-emerald-600">Prescribe a Compliant Migration Plan.</span>
         </h1>

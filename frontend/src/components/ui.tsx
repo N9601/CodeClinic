@@ -127,7 +127,7 @@ export function BulletList({ items, className, marker = 'bg-teal-500' }: { items
 
 export function Spinner({ className }: { className?: string }) {
   return (
-    <svg className={cx('animate-spin', className ?? 'size-5 text-teal-600')} viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg className={cx('animate-spin', className ?? 'size-5 text-emerald-500')} viewBox="0 0 24 24" fill="none" aria-hidden>
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.2" strokeWidth="3" />
       <path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
     </svg>
@@ -167,7 +167,7 @@ export function Button({
       disabled={disabled}
       title={title}
       className={cx(
-        'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed',
+        'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed sm:min-h-0',
         styles,
         className,
       )}
