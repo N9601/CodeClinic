@@ -1,0 +1,18 @@
+{
+  "id": "repconnect",
+  "tagline": "Non-GxP field sales reporting app on PHP 5 + MySQL",
+  "profile": {
+    "name": "RepConnect",
+    "business_function": "Field force reporting for medical sales representatives: call logging, doctor visit plans and sample-drop tracking",
+    "description": "Custom-built web app used by sales reps to log HCP visits and generate weekly activity reports for regional managers. Not used for any GxP or patient data.",
+    "tech_stack": "PHP 5.6 with a home-grown MVC framework, jQuery, Bootstrap 3",
+    "database": "MySQL 5.6, ~40 GB",
+    "hosting": "Single on-premises Linux VM (CentOS 6) with Apache; no load balancer; manual FTP deployments",
+    "integrations": "Monthly CSV export to the commercial data warehouse; email reports via local Postfix",
+    "users": "~600 sales reps and 40 regional managers in India; heavy mobile browser usage",
+    "data_classification": "Business confidential; healthcare professional (HCP) contact details are personal data under the DPDP Act; no patient data; not GxP",
+    "gxp_relevant": false,
+    "pain_points": "Frequent outages, no mobile-friendly UI, no offline mode, the original developer has left, PHP 5.6 security vulnerabilities",
+    "constraints": "Budget is limited; the business wants a mobile-first experience within 2 quarters"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "labtrack-lims",
+  "tagline": "GxP lab system on .NET Framework 4.5 + SQL Server 2012",
+  "profile": {
+    "name": "LabTrack LIMS",
+    "business_function": "Laboratory Information Management System for QC release testing of finished drug product",
+    "description": "Tracks samples from receipt through testing, results review and Certificate of Analysis (CoA) generation. Used by QC labs to release batches. Results feed batch disposition decisions, so the system is GxP-critical and was validated under GAMP 5 (Category 4 with Category 5 customisations).",
+    "tech_stack": "ASP.NET WebForms on .NET Framework 4.5, C#, jQuery 1.8, Crystal Reports 13 for CoA PDFs, log4net. A Windows Service polls an SMB share for instrument result files (HPLC/Empower exports as CSV).",
+    "database": "SQL Server 2012 Standard, ~600 GB, ~400 stored procedures with business logic, nightly full backup to tape",
+    "hosting": "On-premises: 2 IIS web servers (Windows Server 2012 R2) behind a hardware load balancer with sticky sessions, 1 SQL Server cluster, 1 instrument-integration server",
+    "integrations": "SAP ECC (batch master data via nightly flat-file export), Empower CDS (CSV file drop on SMB share), Active Directory (Windows authentication), SMTP for result notifications",
+    "users": "~350 QC analysts and reviewers across 3 manufacturing sites; peak load during month-end batch release",
+    "data_classification": "GxP electronic records subject to 21 CFR Part 11 and EU Annex 11; audit trail and electronic signatures on result approval; 10+ year retention",
+    "gxp_relevant": true,
+    "pain_points": "Windows Server 2012 R2 and SQL Server 2012 are out of support; audit findings on unpatched servers; month-end slowdowns; adding a new site takes 3 months; only 2 developers understand the stored procedures",
+    "constraints": "Validated state must be preserved; no unplanned downtime during batch release windows; data must stay in the EU for the Ireland site"
+  }
+}
