@@ -1,0 +1,38 @@
+# Scoring anchors for the 7 readiness dimensions. Every dimension is scored
+# 1-10 where 10 = most cloud-ready. Weights live in app/scoring.py.
+dimensions:
+  technology_currency:
+    question: How current and supported is the technology stack?
+    "1": Core OS/runtime/database are years past end of support.
+    "5": Mix of supported and recently-EOL components; upgrade paths exist.
+    "10": All components on supported, current versions.
+  modularity:
+    question: How loosely coupled is the application?
+    "1": Single tightly coupled monolith; logic spread across UI, code and database.
+    "5": Monolith with identifiable modules or a few separately deployed services.
+    "10": Independently deployable services with clear APIs.
+  scalability:
+    question: Can it scale horizontally and tolerate instance loss?
+    "1": Stateful servers, sticky sessions, local disk dependencies, vertical scaling only.
+    "5": Mostly stateless but some local state or singleton jobs.
+    "10": Fully stateless, externalised state, horizontal autoscaling ready.
+  data_portability:
+    question: How easily can the data move to a managed cloud database?
+    "1": Proprietary or unsupported engine, huge volume, heavy vendor-specific features.
+    "5": Mainstream engine with some vendor-specific features or large volume.
+    "10": Engine available as a managed service; moderate volume; standard SQL.
+  integration_complexity:
+    question: How hard are the integrations to move? (10 = simple)
+    "1": Many file drops, shared databases, hard-coded endpoints, on-prem-only partners.
+    "5": A handful of integrations, some file-based or SOAP.
+    "10": Few, API/event-based integrations with documented contracts.
+  compliance_burden:
+    question: How much regulatory work does migration trigger? (10 = light)
+    "1": GxP-critical validated system with Part 11 e-signatures, residency constraints and long retention.
+    "5": GxP-relevant but limited scope, or non-GxP with personal data.
+    "10": Not regulated; no personal or sensitive data.
+  devops_maturity:
+    question: How automated are build, test, deploy and operations?
+    "1": Manual builds/deploys, no automated tests, no monitoring, tape backups.
+    "5": Some CI, partial test automation, basic monitoring.
+    "10": CI/CD, infrastructure-as-code, automated tests, observability.
