@@ -21,6 +21,7 @@ import type { LucideIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { fetchMarkdown } from '../api'
+import { TrustBand } from '../components/brand/TrustBand'
 import { ReadinessGauge } from '../components/ReadinessGauge'
 import { Badge, Button, cx } from '../components/ui'
 import { CLOUD_LONG_LABEL, strategyStyle } from '../lib/format'
@@ -195,11 +196,13 @@ export function Report({
       <section className="avoid-break mb-6 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm">
         <div className="flex flex-col gap-6 p-5 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0 flex-1">
-            <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold uppercase tracking-wider text-teal-700">
-              <span>CodeClinic diagnosis</span>
-              <span className="font-normal normal-case tracking-normal text-slate-400">Generated {report.generated_at}</span>
+            <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="annotation">Modernization Report</span>
+              <span className="text-xs text-slate-400">Generated {report.generated_at}</span>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{report.profile.name}</h1>
+            <h1 className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+              {report.profile.name}
+            </h1>
             {report.profile.business_function && (
               <p className="mt-1.5 max-w-3xl text-sm text-slate-600 sm:text-base">{report.profile.business_function}</p>
             )}
@@ -330,6 +333,9 @@ export function Report({
           </div>
         </>
       )}
+      <div className="mx-[-1rem] mt-12 sm:mx-[-1.5rem] lg:mx-[-2rem]">
+        <TrustBand />
+      </div>
     </div>
   )
 }
