@@ -171,7 +171,13 @@ async def produce_report(request: AssessRequest, emit=_noop_emit) -> AssessmentR
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "ok", "live": pipeline.has_credentials() and not DEMO_MODE, "demo_mode": DEMO_MODE, "model": pipeline.MODEL}
+    return {
+        "status": "ok",
+        "live": pipeline.has_credentials() and not DEMO_MODE,
+        "demo_mode": DEMO_MODE,
+        "model": pipeline.MODEL,
+        "chat_provider": chat.active_provider(),  # "gemini" | "claude" | "demo"
+    }
 
 
 @app.get("/api/samples")
