@@ -1,0 +1,35 @@
+# Target architecture patterns the advisor may recommend.
+patterns:
+  - name: Replatform to managed PaaS
+    fits: EOL OS/database with sound application logic; validated systems that need minimal change.
+    moves: App server -> managed app hosting; database -> managed database; backups -> platform PITR.
+  - name: Strangler fig
+    fits: Monoliths that must keep running while parts are modernised; validated systems (small validation increments).
+    moves: Put a facade/API gateway in front, carve out one capability at a time, retire legacy paths progressively.
+  - name: Modular monolith
+    fits: Monoliths with tangled code but a small team; a stepping stone before microservices.
+    moves: Enforce module boundaries, separate schemas per module, deploy as one unit with CI/CD.
+  - name: Microservices on managed Kubernetes
+    fits: Large apps with independent domains, multiple teams and high release frequency.
+    moves: Containerise services, managed Kubernetes, service mesh optional, database per service.
+  - name: Serverless containers
+    fits: Stateless web/API workloads that want container portability without running Kubernetes.
+    moves: Containerise and run on a serverless container platform with autoscaling to zero.
+  - name: Event-driven integration
+    fits: File drops, polling jobs, point-to-point integrations, instrument/lab data feeds.
+    moves: Replace polling with events/queues; idempotent consumers; immutable raw-data landing zone.
+  - name: Serverless batch and scheduling
+    fits: Nightly batch jobs, ETL, cron/Quartz/Windows Task Scheduler jobs.
+    moves: Managed schedulers + functions or managed data pipelines; observable, retryable steps.
+  - name: Externalised session state
+    fits: Apps using in-process sessions and sticky load balancing.
+    moves: Managed cache for session state so instances become stateless and can scale out.
+  - name: API gateway facade
+    fits: Legacy SOAP/RPC interfaces consumed by many parties; strangler-fig entry point.
+    moves: Managed API gateway for auth, throttling, versioning and routing between legacy and new.
+  - name: SaaS replacement
+    fits: Commodity capabilities (CRM, field force, email, document management).
+    moves: Migrate data to a qualified SaaS product; retire custom code.
+  - name: GxP landing zone
+    fits: Any regulated workload.
+    moves: Policy-enforced regions, encryption, centralised immutable audit logging, IaC with change control, qualified infrastructure baseline.
