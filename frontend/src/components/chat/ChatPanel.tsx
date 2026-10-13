@@ -165,10 +165,10 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="no-print fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-600/40 ring-1 ring-inset ring-emerald-700/20 transition hover:bg-emerald-700"
+          className="no-print group fixed bottom-6 right-6 z-40 inline-flex h-14 items-center gap-2 rounded-full bg-emerald-500 px-5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 ring-1 ring-inset ring-emerald-600/20 transition-all duration-200 hover:scale-[1.03] hover:bg-emerald-600 hover:shadow-xl hover:shadow-emerald-500/40"
           aria-label="Open the advisor chat"
         >
-          <MessageSquare className="size-4" aria-hidden />
+          <MessageSquare className="size-5" aria-hidden />
           Ask the advisor
         </button>
       )}
@@ -176,7 +176,7 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
       {/* Panel */}
       <div
         className={cx(
-          'no-print fixed inset-y-0 right-0 z-50 flex w-full max-w-[380px] flex-col border-l border-slate-200 bg-white shadow-2xl transition-transform duration-300',
+          'no-print fixed inset-y-0 right-0 z-50 flex w-full max-w-[380px] flex-col border-l border-slate-200 bg-white shadow-2xl transition-transform duration-250 ease-out',
           open ? 'translate-x-0' : 'translate-x-full pointer-events-none',
         )}
         role="dialog"
@@ -210,7 +210,7 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
                   type="button"
                   disabled={streaming}
                   onClick={() => sendPrompt(s.prompt)}
-                  className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-200 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
                   title={s.prompt}
                 >
                   {s.label}
@@ -275,12 +275,15 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
               type="button"
               onClick={onSend}
               disabled={streaming || !input.trim()}
-              className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-300"
               aria-label="Send"
             >
               <Send className="size-4" />
             </button>
           </div>
+          <p className="mt-2 text-center text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400">
+            powered by Claude
+          </p>
         </div>
       </div>
     </>
@@ -291,7 +294,7 @@ function MessageBubble({ message, showCaret }: { message: ChatMessage; showCaret
   if (message.role === 'user') {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-emerald-600 px-3.5 py-2 text-sm leading-relaxed text-white shadow-sm">
+        <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-emerald-500 px-3.5 py-2 text-sm leading-relaxed text-white shadow-sm">
           {message.content}
         </div>
       </div>
@@ -299,7 +302,10 @@ function MessageBubble({ message, showCaret }: { message: ChatMessage; showCaret
   }
   return (
     <div className="flex justify-start">
-      <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-3.5 py-2 text-sm leading-relaxed text-slate-800 shadow-sm">
+      <div
+        className="max-w-[90%] rounded-2xl rounded-bl-sm bg-white px-3.5 py-2 text-sm leading-relaxed text-slate-800 shadow-sm"
+        style={{ borderLeft: '3px dashed #10b981' }}
+      >
         {message.content ? (
           <div className="cc-chat-md">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
