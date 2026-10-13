@@ -1,6 +1,7 @@
 import { ArrowLeft, Check, CircleX, Cloud, FileSearch, FileText, Network, Package, Route, ShieldAlert, Timer } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { SectionHeader } from '../components/brand/SectionHeader'
 import { Button, Card, cx, Spinner } from '../components/ui'
 import { CLOUD_LABEL } from '../lib/format'
 import type { CloudProvider, StageName } from '../types'
@@ -89,10 +90,13 @@ export function Running({
         <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-linear-to-br from-teal-500 to-emerald-600 text-white shadow-lg shadow-teal-600/25">
           {error ? <CircleX className="size-7" aria-hidden /> : <Spinner className="size-7 text-white" />}
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          {error ? 'Diagnosis interrupted' : `Diagnosing ${appName}`}
-        </h1>
-        <p className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-slate-500">
+        <SectionHeader
+          eyebrow={error ? '[ Interrupted ]' : '[ In progress ]'}
+          title={error ? 'Diagnosis interrupted' : `Diagnosing ${appName}`}
+          align="center"
+          size="md"
+        />
+        <p className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-slate-500">
           <span className="inline-flex items-center gap-1.5">
             <Cloud className="size-4" aria-hidden /> Target: {CLOUD_LABEL[cloud]}
           </span>
