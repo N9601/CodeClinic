@@ -1,0 +1,114 @@
+{
+  "target_cloud": "aws",
+  "analysis": {
+    "architecture_style": "Single-VM LAMP monolith (home-grown PHP MVC)",
+    "summary": "A PHP 5.6 web application with a custom MVC framework and MySQL 5.6, running on one CentOS 6 VM with Apache and a local Postfix relay. Deployments are manual over FTP and there is no redundancy, so every VM issue is an outage. The capability itself - field force call reporting - is a commodity CRM function.",
+    "components": [
+      {"id": "web_app", "name": "RepConnect Web App", "type": "frontend", "technology": "PHP 5.6, custom MVC, jQuery + Bootstrap 3 on Apache", "description": "Call logging, visit plans, sample-drop tracking and weekly activity reports.", "issues": ["Not mobile-friendly; no offline mode", "Undocumented home-grown framework", "Original developer has left"]},
+      {"id": "mysql_db", "name": "RepConnect Database", "type": "database", "technology": "MySQL 5.6 (~40 GB)", "description": "Calls, visit plans, HCP master data and sample inventory.", "issues": ["MySQL 5.6 is end of life", "Duplicate HCP records across regions"]},
+      {"id": "report_export", "name": "Monthly Warehouse Export", "type": "batch", "technology": "PHP cron script writing CSV", "description": "Monthly extract of call activity to the commercial data warehouse.", "issues": ["Monthly latency for sales analytics", "Fails silently"]},
+      {"id": "mail_relay", "name": "Postfix Relay", "type": "integration", "technology": "Local Postfix on the app VM", "description": "Sends weekly activity reports to managers.", "issues": ["Shares the single VM; no deliverability monitoring"]},
+      {"id": "vm_host", "name": "Application VM", "type": "storage", "technology": "CentOS 6 VM, local disk, manual FTP deploys", "description": "Hosts Apache, PHP, MySQL and Postfix together.", "issues": ["CentOS 6 is end of life", "Single point of failure", "No automated backups verified"]},
+      {"id": "data_warehouse", "name": "Commercial Data Warehouse", "type": "external", "technology": "Corporate warehouse (CSV ingest)", "description": "Downstream sales analytics.", "issues": []},
+      {"id": "sales_reps", "name": "Sales reps (mobile browsers)", "type": "external", "technology": "Android/iOS browsers", "description": "~600 reps and 40 regional managers in India.", "issues": ["Poor experience on low bandwidth"]}
+    ],
+    "edges": [
+      {"source": "sales_reps", "target": "web_app", "label": "HTTPS (mobile browser)"},
+      {"source": "web_app", "target": "mysql_db", "label": "mysqli queries"},
+      {"source": "report_export", "target": "mysql_db", "label": "Monthly extract"},
+      {"source": "report_export", "target": "data_warehouse", "label": "CSV file"},
+      {"source": "web_app", "target": "mail_relay", "label": "Weekly reports"},
+      {"source": "web_app", "target": "vm_host", "label": "Runs on"}
+    ],
+    "tech_inventory": [
+      {"name": "PHP", "version": "5.6", "category": "language", "support_status": "end_of_life", "note": "PHP 5.x support ended December 2018"},
+      {"name": "MySQL", "version": "5.6", "category": "database", "support_status": "end_of_life", "note": "Support ended February 2021"},
+      {"name": "CentOS", "version": "6", "category": "os", "support_status": "end_of_life", "note": "Support ended November 2020"},
+      {"name": "Apache HTTP Server", "version": "2.2", "category": "app_server", "support_status": "end_of_life", "note": "2.2 branch retired in 2018; assumed from CentOS 6 packages"},
+      {"name": "Bootstrap", "version": "3", "category": "framework", "support_status": "end_of_life", "note": "No longer maintained; not mobile-first by modern standards"},
+      {"name": "jQuery", "version": "1.x", "category": "library", "support_status": "end_of_life", "note": "Known XSS issues fixed only in 3.5+"}
+    ],
+    "tech_debt": [
+      "Home-grown MVC framework with no documentation and no remaining author",
+      "No automated tests; deployments are manual FTP copies to production",
+      "App server, database and mail relay share one VM with no failover",
+      "Duplicate HCP master records across regions",
+      "Monthly CSV export instead of an integration"
+    ],
+    "regulated_data": "No GxP or patient data. Healthcare professional (HCP) names and contact details are personal data under India's DPDP Act."
+  },
+  "assessment": {
+    "dimensions": [
+      {"key": "technology_currency", "score": 2, "rationale": "Language, database and OS are all years past end of support.", "evidence": ["PHP 5.6 - EOL Dec 2018", "MySQL 5.6 - EOL Feb 2021", "CentOS 6 - EOL Nov 2020"]},
+      {"key": "modularity", "score": 3, "rationale": "A single undocumented monolith; nothing is separately deployable.", "evidence": ["Home-grown MVC framework", "App, DB and mail on one VM"]},
+      {"key": "scalability", "score": 3, "rationale": "One VM with PHP sessions on local disk; no horizontal scaling or redundancy.", "evidence": ["Single CentOS VM", "Frequent outages"]},
+      {"key": "data_portability", "score": 8, "rationale": "40 GB of MySQL with a simple schema migrates easily to a managed database or SaaS objects.", "evidence": ["MySQL 5.6, ~40 GB", "Standard relational schema"]},
+      {"key": "integration_complexity", "score": 8, "rationale": "Only a monthly CSV export and outbound email.", "evidence": ["Monthly CSV to data warehouse", "Local Postfix for reports"]},
+      {"key": "compliance_burden", "score": 8, "rationale": "Not GxP; the main obligation is DPDP-compliant handling of HCP personal data.", "evidence": ["No patient or GxP data", "HCP contact details are personal data (DPDP Act)"]},
+      {"key": "devops_maturity", "score": 2, "rationale": "Manual FTP deployments, no tests, no monitoring.", "evidence": ["Manual FTP deployments", "No CI/CD or automated tests"]}
+    ],
+    "risks": [
+      {"title": "Exploitable PHP 5.6 vulnerabilities", "category": "security", "likelihood": 4, "impact": 4, "gxp_related": false, "description": "An internet-facing PHP 5.6 app on CentOS 6 receives no security patches.", "mitigation": "Put a WAF in front immediately and fast-track the migration; restrict admin pages by IP."},
+      {"title": "Low adoption by field reps", "category": "organizational", "likelihood": 3, "impact": 4, "gxp_related": false, "description": "Reps may resist a new tool mid-quarter, hurting call-reporting compliance.", "mitigation": "Pilot with one region, involve rep champions, provide offline mobile app and short video training."},
+      {"title": "Duplicate and dirty HCP master data", "category": "data", "likelihood": 4, "impact": 3, "gxp_related": false, "description": "Duplicate HCP records would carry into the new system and distort call metrics.", "mitigation": "Deduplicate and standardise HCP records before migration; assign a data steward."},
+      {"title": "DPDP consent and notice gaps", "category": "compliance", "likelihood": 3, "impact": 4, "gxp_related": false, "description": "HCP personal data may lack recorded consent or purpose notices required by the DPDP Act.", "mitigation": "Host in an India region, capture consent in the new platform and document processing purposes."},
+      {"title": "SaaS licence cost overrun", "category": "vendor", "likelihood": 3, "impact": 3, "gxp_related": false, "description": "Per-user SaaS pricing for 640 users may exceed the limited budget.", "mitigation": "Negotiate tiered pricing; compare against a low-code replatform option before signing."},
+      {"title": "Custom features lost in the move", "category": "technical", "likelihood": 3, "impact": 2, "gxp_related": false, "description": "Sample-drop tracking quirks may not map one-to-one to SaaS objects.", "mitigation": "Run a fit-gap workshop; configure custom objects only for the gaps that matter."},
+      {"title": "Reporting gap during cutover", "category": "operational", "likelihood": 2, "impact": 2, "gxp_related": false, "description": "Managers may lose weekly reports for a cycle during switchover.", "mitigation": "Cut over at week start and run both systems in read-only parallel for one cycle."}
+    ],
+    "opportunities": [
+      {"title": "Mobile-first with offline mode", "benefit": "Reps log calls in the field even on poor networks.", "effort": "low"},
+      {"title": "Real-time manager dashboards", "benefit": "Weekly CSV reports become live dashboards.", "effort": "low"},
+      {"title": "Zero infrastructure to run", "benefit": "No VM patching, backups or outages to manage.", "effort": "medium"},
+      {"title": "Daily warehouse feed", "benefit": "Sales analytics move from monthly to daily data.", "effort": "medium"}
+    ]
+  },
+  "plan": {
+    "headline": "Repurchase: replace RepConnect with a life-sciences SaaS CRM in about 15 weeks, piloting one region first and retiring the end-of-life VM.",
+    "overall_strategy": "repurchase",
+    "patterns": [
+      {"name": "SaaS replacement", "why": "Field force call reporting is a commodity CRM capability; custom code adds no differentiation."},
+      {"name": "Event-driven integration", "why": "A managed SaaS-to-cloud data flow replaces the fragile monthly CSV export."}
+    ],
+    "component_strategies": [
+      {"component_id": "web_app", "strategy": "repurchase", "rationale": "A life-sciences SaaS CRM (e.g. Veeva CRM or Salesforce Life Sciences Cloud) provides call reporting, visit planning, sample tracking and an offline mobile app.", "target_service": "Life-sciences SaaS CRM"},
+      {"component_id": "mysql_db", "strategy": "retire", "rationale": "Data migrates into SaaS objects; a read-only archive is kept for history.", "target_service": "Amazon S3 archive (Glacier tier)"},
+      {"component_id": "report_export", "strategy": "refactor", "rationale": "A managed SaaS connector delivers daily data to the warehouse.", "target_service": "Amazon AppFlow"},
+      {"component_id": "mail_relay", "strategy": "retire", "rationale": "SaaS CRM notifications and dashboards replace emailed reports.", "target_service": "SaaS CRM notifications"},
+      {"component_id": "vm_host", "strategy": "retire", "rationale": "Decommission the CentOS 6 VM after cutover and archive.", "target_service": "Decommissioned"},
+      {"component_id": "data_warehouse", "strategy": "retain", "rationale": "Corporate warehouse stays; it receives a daily feed instead of a monthly file.", "target_service": "Existing warehouse via Amazon S3 landing zone"},
+      {"component_id": "sales_reps", "strategy": "retain", "rationale": "Same users, now on the native mobile app.", "target_service": "SaaS CRM mobile app"}
+    ],
+    "target_summary": "A life-sciences SaaS CRM with its offline mobile app for reps and live dashboards for managers, integrated through Amazon AppFlow into an S3 landing zone in the AWS Mumbai region for the warehouse, with the legacy database archived to S3 Glacier.",
+    "target_components": [
+      {"id": "mobile", "name": "Rep Mobile App", "type": "frontend", "service": "SaaS CRM mobile app (offline)", "description": "Call logging and visit plans in the field."},
+      {"id": "crm", "name": "Life-sciences CRM", "type": "backend", "service": "Life-sciences SaaS CRM", "description": "Calls, HCP master data, samples and dashboards."},
+      {"id": "sso", "name": "Corporate SSO", "type": "identity", "service": "AWS IAM Identity Center (SAML to CRM)", "description": "Single sign-on and joiner/leaver control."},
+      {"id": "appflow", "name": "CRM Data Flow", "type": "integration", "service": "Amazon AppFlow", "description": "Daily extract of CRM activity."},
+      {"id": "landing", "name": "Analytics Landing Zone", "type": "storage", "service": "Amazon S3 (ap-south-1)", "description": "Daily files for the warehouse, India region."},
+      {"id": "archive", "name": "Legacy Archive", "type": "storage", "service": "Amazon S3 Glacier", "description": "Read-only RepConnect history."},
+      {"id": "dwh", "name": "Commercial Data Warehouse", "type": "external", "service": "Existing warehouse", "description": "Ingests the daily landing files."}
+    ],
+    "target_edges": [
+      {"source": "mobile", "target": "crm", "label": "Sync (offline capable)"},
+      {"source": "mobile", "target": "sso", "label": "SAML sign-in"},
+      {"source": "crm", "target": "appflow", "label": "Daily extract"},
+      {"source": "appflow", "target": "landing", "label": "Parquet files"},
+      {"source": "landing", "target": "dwh", "label": "Daily load"},
+      {"source": "crm", "target": "archive", "label": "One-time history export"}
+    ],
+    "roadmap": [
+      {"name": "Discovery and SaaS selection", "start_week": 0, "duration_weeks": 3, "objectives": ["Choose the CRM and confirm budget"], "activities": ["Fit-gap workshop on calls, visit plans and sample drops", "Vendor demos and pricing negotiation", "DPDP data-processing review"], "deliverables": ["Fit-gap analysis", "Signed SaaS contract"], "validation_gates": ["Business case go/no-go"]},
+      {"name": "Platform configuration", "start_week": 3, "duration_weeks": 5, "objectives": ["Configure the CRM for Indian field force processes"], "activities": ["Configure call, visit plan and sample objects", "SSO with IAM Identity Center", "Offline mobile app setup and consent capture"], "deliverables": ["Configured CRM sandbox"], "validation_gates": ["User acceptance sign-off"]},
+      {"name": "Data cleansing and migration", "start_week": 6, "duration_weeks": 3, "objectives": ["Move clean history into the CRM"], "activities": ["Deduplicate HCP master records", "Load 3 years of call history", "Archive the full MySQL dump to S3 Glacier"], "deliverables": ["Migration reconciliation report"], "validation_gates": ["Data reconciliation sign-off"]},
+      {"name": "Regional pilot", "start_week": 9, "duration_weeks": 3, "objectives": ["Prove adoption with one region"], "activities": ["Pilot with ~60 reps in one region", "Daily AppFlow feed to the warehouse", "Collect feedback and tune"], "deliverables": ["Pilot adoption report"], "validation_gates": ["Pilot go/no-go"]},
+      {"name": "National rollout and decommission", "start_week": 12, "duration_weeks": 3, "objectives": ["Move all reps and retire the VM"], "activities": ["Roll out to all regions in two waves", "Read-only parallel run for one reporting cycle", "Decommission the CentOS 6 VM"], "deliverables": ["Rollout complete", "Decommissioning record"], "validation_gates": ["Business sign-off to decommission"]}
+    ],
+    "quick_wins": [
+      "Put a web application firewall in front of RepConnect this week",
+      "Take and test a full MySQL backup off the VM",
+      "Start HCP master data deduplication now - it is needed for any target",
+      "Shortlist two life-sciences CRM vendors for demos"
+    ]
+  }
+}
