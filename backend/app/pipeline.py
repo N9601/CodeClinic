@@ -33,7 +33,28 @@ except Exception:
 MODEL = os.getenv("CODECLINIC_MODEL", "claude-opus-5-5")
 EFFORT = os.getenv("CODECLINIC_EFFORT", "medium")
 USE_FALLBACKS = os.getenv("CODECLINIC_FALLBACKS", "1") == "1"
-MAX_TOKENS = 20000  # stays under the SDK's non-streaming limit; thinking counts toward it
+MAX_TOKENS = 20000  # Claude - stays under the SDK's non-streaming limit; thinking counts toward it
+
+# Per-stage output caps for Gemini. Flash Lite is much faster with tighter caps
+# and these are generous for structured output.
+GEMINI_MAX_TOKENS = {
+    "extract": 8000,       # PDF -> profile + first-pass analysis
+    "analyze": 6000,
+    "assess": 4000,        # 7 dimension scores + risks + opportunities
+    "recommend": 8000,     # patterns + per-component strategy + roadmap
+    "compliance": 6000,
+}
+
+# Tight role for Gemini - the knowledge base in the full Claude system prompt
+# would be another 7k tokens on every call, which Flash Lite doesn't need. The
+# stage instructions are self-contained.
+GEMINI_SYSTEM_ROLE = """You are CodeClinic's modernization analyst for pharma IT.
+You produce structured, grounded JSON that validates against the response schema.
+Rules: cite scanner evidence by name and file where present; name actual \
+technologies and integrations from the input (never generic cloud advice); treat \
+regulatory impact as first-class for GxP systems (21 CFR Part 11, Annex 11, \
+GAMP 5, ALCOA+, IQ/OQ/PQ) and skip validation overhead for non-GxP systems; \
+never invent risks, strategies, or regulation clauses."""
 
 # Gemini pipeline chain. Lite handles our structured-output stages fine and has
 # the best free-tier availability; the full flash is the fallback for complex
@@ -155,13 +176,16 @@ async def _run_stage_gemini(name: str, instructions: str, payload: dict, schema:
     """Structured-output call via Gemini. Rotates through the model chain on
     503/UNAVAILABLE so one throttled model doesn't drop us to demo mode."""
     client = google_genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-    system_text = prompts.system_prompt() + "\n\n" + instructions
+    # Compact system prompt + stage instructions - no knowledge base. Flash Lite
+    # doesn't need the full KB and processes 7k fewer input tokens per call.
+    system_text = f"{GEMINI_SYSTEM_ROLE}\n\n{instructions}"
     parts: list = []
     if document is not None:
         parts.append({"inline_data": {"mime_type": "application/pdf", "data": base64.b64encode(document).decode("ascii")}})
     parts.append({"text": f"<input>\n{json.dumps(payload, indent=1)}\n</input>"})
     contents = [{"role": "user", "parts": parts}]
     response_schema = _gemini_schema(schema)
+    max_output_tokens = GEMINI_MAX_TOKENS.get(name, 6000)
 
     last_err: Exception | None = None
     for model in GEMINI_PIPELINE_CHAIN:
@@ -173,7 +197,7 @@ async def _run_stage_gemini(name: str, instructions: str, payload: dict, schema:
                     "system_instruction": system_text,
                     "response_mime_type": "application/json",
                     "response_schema": response_schema,
-                    "max_output_tokens": MAX_TOKENS,
+                    "max_output_tokens": max_output_tokens,
                     "temperature": 0.2,
                 },
             )
