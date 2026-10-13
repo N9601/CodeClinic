@@ -35,11 +35,25 @@ CACHED_STAGE_DELAY = 0.7  # seconds per stage when replaying a cached report
 
 STAGE_LABELS = {
     "scan": "Scanning artifacts",
+    "extract": "Reading assessment document",
     "analyze": "Analyzing architecture",
     "assess": "Assessing readiness & risks",
     "recommend": "Designing target architecture & roadmap",
     "assemble": "Compiling report",
 }
+
+# Map an uploaded PDF's filename stem to the sample it corresponds to, so demo
+# mode (no API key) can replay the sample's cached report when the user drops in
+# our bundled assessment PDF.
+PDF_FILENAME_TO_SAMPLE = {
+    "labtrack-lims-assessment": "labtrack-lims",
+    "labtrack-lims": "labtrack-lims",
+    "trialhub-ctms-assessment": "trialhub-ctms",
+    "trialhub-ctms": "trialhub-ctms",
+    "repconnect-assessment": "repconnect",
+    "repconnect": "repconnect",
+}
+MAX_INGEST_BYTES = 32 * 1024 * 1024  # Claude PDF input limit is 32 MB
 
 app = FastAPI(title="CodeClinic API", version="0.1.0")
 app.add_middleware(
@@ -93,7 +107,8 @@ async def _noop_emit(stage: str, status: str) -> None:
 
 
 async def _serve_cached(request: AssessRequest, cached: AssessmentReport, emit) -> AssessmentReport:
-    for stage in ("analyze", "assess", "recommend", "assemble"):
+    first_stage = "extract" if request.extraction is not None else "analyze"
+    for stage in (first_stage, "assess", "recommend", "assemble"):
         await emit(stage, "started")
         await asyncio.sleep(CACHED_STAGE_DELAY)
         await emit(stage, "done")
@@ -102,6 +117,9 @@ async def _serve_cached(request: AssessRequest, cached: AssessmentReport, emit) 
     report.mode = "cached"
     if request.signals:
         report.signals = request.signals
+    if request.extraction is not None:
+        report.source_document = request.extraction.document_title
+        report.extraction_confidence = request.extraction.profile.confidence
     return report
 
 
@@ -171,6 +189,64 @@ def get_sample(sample_id: str) -> dict:
         "profile": AppProfile(**data["profile"]).model_dump(),
         "has_cached_report": (SAMPLES / "reports" / f"{sample_id}.json").exists(),
     }
+
+
+def _match_cached_sample(filename: str) -> str | None:
+    stem = Path(filename).stem.lower().replace("_", "-")
+    return PDF_FILENAME_TO_SAMPLE.get(stem)
+
+
+@app.post("/api/ingest")
+async def ingest(file: UploadFile = File(...)) -> dict:
+    """Stage 0 only: extract profile + first-pass analysis from an uploaded
+    assessment PDF. Returns an ExtractionResult the client can post straight to
+    /api/assess (together with target_cloud) to run the full pipeline."""
+    data = await file.read(MAX_INGEST_BYTES + 1)
+    if len(data) > MAX_INGEST_BYTES:
+        raise HTTPException(413, "Upload is larger than 32 MB")
+    if not data.startswith(b"%PDF-"):
+        raise HTTPException(400, "Upload is not a PDF file")
+
+    # Demo mode / no key: replay the matching sample's extraction (filename -> sample id).
+    sample_id = _match_cached_sample(file.filename or "")
+    want_cached = DEMO_MODE or not pipeline.has_credentials()
+    if want_cached:
+        if not sample_id:
+            raise HTTPException(
+                422,
+                "Demo mode has no cached extraction for this filename. "
+                "Upload one of the bundled sample PDFs or set ANTHROPIC_API_KEY for live extraction.",
+            )
+        cached_report = _cached_report(sample_id)
+        if cached_report is None:
+            raise HTTPException(500, f"Cached report for sample {sample_id} is missing")
+        extraction = _extraction_from_cached(cached_report, file.filename or "")
+        return {"extraction": extraction.model_dump(mode="json"), "sample_id": sample_id, "source": "cached"}
+
+    try:
+        extraction = await pipeline.extract(data, file.filename or "assessment.pdf", _noop_emit)
+    except pipeline.PipelineError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    return {"extraction": extraction.model_dump(mode="json"), "sample_id": sample_id, "source": "live"}
+
+
+def _extraction_from_cached(report: AssessmentReport, filename: str):
+    """Build a plausible ExtractionResult from a cached sample report, for demo mode."""
+    from .schemas import ExtractedProfile, ExtractionResult
+
+    stem = Path(filename).stem.replace("_", " ").replace("-", " ").title()
+    return ExtractionResult(
+        document_title=f"{report.profile.name} - Current-State Architecture Assessment",
+        document_summary=report.architecture.summary[:400],
+        pages_estimated=11,
+        profile=ExtractedProfile(
+            **report.profile.model_dump(),
+            confidence="high",
+            confidence_notes="Replayed from bundled fixture - demo mode without a live API key.",
+            source_pages={field: "demo (bundled)" for field in report.profile.model_dump()},
+        ),
+        analysis=report.architecture,
+    )
 
 
 @app.post("/api/scan")
