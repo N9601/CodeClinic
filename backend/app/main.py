@@ -179,7 +179,8 @@ def health() -> dict:
         "live": pipeline.has_credentials() and not DEMO_MODE,
         "demo_mode": DEMO_MODE,
         "model": pipeline.MODEL,
-        "chat_provider": chat.active_provider(),  # "gemini" | "claude" | "demo"
+        "pipeline_provider": pipeline.pipeline_provider(),  # "gemini" | "claude" | "demo"
+        "chat_provider": chat.active_provider(),
     }
 
 
@@ -226,27 +227,33 @@ async def ingest(file: UploadFile = File(...)) -> dict:
     if not data.startswith(b"%PDF-"):
         raise HTTPException(400, "Upload is not a PDF file")
 
-    # Demo mode / no key: replay the matching sample's extraction (filename -> sample id).
+    # Live provider available (Gemini free tier or Claude) -> extract any PDF.
+    # Only fall back to cached-sample replay when no provider is configured.
     sample_id = _match_cached_sample(file.filename or "")
-    want_cached = DEMO_MODE or not pipeline.has_credentials()
-    if want_cached:
-        if not sample_id:
-            raise HTTPException(
-                422,
-                "Demo mode has no cached extraction for this filename. "
-                "Upload one of the bundled sample PDFs or set ANTHROPIC_API_KEY for live extraction.",
-            )
-        cached_report = _cached_report(sample_id)
-        if cached_report is None:
-            raise HTTPException(500, f"Cached report for sample {sample_id} is missing")
-        extraction = _extraction_from_cached(cached_report, file.filename or "")
-        return {"extraction": extraction.model_dump(mode="json"), "sample_id": sample_id, "source": "cached"}
+    if pipeline.has_credentials() and not DEMO_MODE:
+        try:
+            extraction = await pipeline.extract(data, file.filename or "assessment.pdf", _noop_emit)
+        except pipeline.PipelineError as exc:
+            # Last-ditch: if the live extract fails AND the filename matches a bundled sample, replay.
+            if sample_id and (cached_report := _cached_report(sample_id)):
+                extraction = _extraction_from_cached(cached_report, file.filename or "")
+                return {"extraction": extraction.model_dump(mode="json"), "sample_id": sample_id, "source": "cached"}
+            raise HTTPException(502, str(exc)) from exc
+        return {"extraction": extraction.model_dump(mode="json"), "sample_id": sample_id, "source": "live"}
 
-    try:
-        extraction = await pipeline.extract(data, file.filename or "assessment.pdf", _noop_emit)
-    except pipeline.PipelineError as exc:
-        raise HTTPException(502, str(exc)) from exc
-    return {"extraction": extraction.model_dump(mode="json"), "sample_id": sample_id, "source": "live"}
+    # Full demo mode: no live provider, no key. Must match a bundled sample filename.
+    if not sample_id:
+        raise HTTPException(
+            422,
+            "No live LLM provider is configured and this PDF filename doesn't match a bundled sample. "
+            "Set GEMINI_API_KEY (free tier) or ANTHROPIC_API_KEY in backend/.env for live extraction, "
+            "or upload one of the bundled sample PDFs.",
+        )
+    cached_report = _cached_report(sample_id)
+    if cached_report is None:
+        raise HTTPException(500, f"Cached report for sample {sample_id} is missing")
+    extraction = _extraction_from_cached(cached_report, file.filename or "")
+    return {"extraction": extraction.model_dump(mode="json"), "sample_id": sample_id, "source": "cached"}
 
 
 def _extraction_from_cached(report: AssessmentReport, filename: str):
