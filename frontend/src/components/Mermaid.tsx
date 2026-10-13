@@ -7,6 +7,8 @@ import { cx, Spinner } from './ui'
 
 let initialized = false
 let counter = 0
+/** Rendered SVG per source string, so revisiting a tab (or printing) is instant. */
+const svgCache = new Map<string, string>()
 
 function ensureInitialized() {
   if (initialized) return
@@ -50,11 +52,19 @@ export function Mermaid({
   label?: string
   expandable?: boolean
 }) {
-  const [state, setState] = useState<State>({ status: 'loading' })
+  const [state, setState] = useState<State>(() => {
+    const cached = svgCache.get(code)
+    return cached ? { status: 'ok', svg: cached } : { status: 'loading' }
+  })
   const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     let cancelled = false
+    const cached = svgCache.get(code)
+    if (cached) {
+      setState({ status: 'ok', svg: cached })
+      return
+    }
     const id = `cc-mermaid-${++counter}`
     setState({ status: 'loading' })
 
@@ -67,6 +77,7 @@ export function Mermaid({
       try {
         ensureInitialized()
         const { svg } = await mermaid.render(id, code.trim())
+        svgCache.set(code, svg)
         if (!cancelled) setState({ status: 'ok', svg })
       } catch (err) {
         cleanupLeftovers(id)
