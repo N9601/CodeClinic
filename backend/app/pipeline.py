@@ -5,6 +5,7 @@ model), so responses are always schema-valid JSON. Assess and recommend only
 depend on the analysis, so they run in parallel: two model round-trips total."""
 
 import asyncio
+import base64
 import json
 import os
 from collections.abc import Awaitable, Callable
@@ -17,6 +18,7 @@ from .schemas import (
     ArchitectureAnalysis,
     AssessmentReport,
     AssessRequest,
+    ExtractionResult,
     ModernizationPlan,
     ReadinessAssessment,
 )
@@ -49,24 +51,27 @@ def _get_client() -> anthropic.AsyncAnthropic:
     return _client
 
 
-async def _run_stage(name: str, instructions: str, payload: dict, schema: type):
+async def _run_stage(name: str, instructions: str, payload: dict, schema: type, *, document: bytes | None = None, document_name: str | None = None):
     # Server-side fallback re-runs a declined request on another model inside the same call.
     extra = (
         {"extra_headers": {"anthropic-beta": "server-side-fallback-2026-07-01"}, "extra_body": {"fallbacks": "default"}}
         if USE_FALLBACKS
         else {}
     )
+    content: list[dict] = []
+    if document is not None:
+        content.append({
+            "type": "document",
+            "source": {"type": "base64", "media_type": "application/pdf", "data": base64.b64encode(document).decode("ascii")},
+            "title": document_name or "assessment.pdf",
+        })
+    content.append({"type": "text", "text": f"{instructions}\n\n<input>\n{json.dumps(payload, indent=1)}\n</input>"})
     try:
         response = await _get_client().messages.parse(
             model=MODEL,
             max_tokens=MAX_TOKENS,
             system=[{"type": "text", "text": prompts.system_prompt(), "cache_control": {"type": "ephemeral"}}],
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"{instructions}\n\n<input>\n{json.dumps(payload, indent=1)}\n</input>",
-                }
-            ],
+            messages=[{"role": "user", "content": content}],
             output_format=schema,
             output_config={"effort": EFFORT},
             **extra,
@@ -91,15 +96,31 @@ async def _run_stage(name: str, instructions: str, payload: dict, schema: type):
     return response.parsed_output
 
 
+async def extract(document: bytes, document_name: str, emit: Emit) -> ExtractionResult:
+    """Stage 0: read the uploaded assessment PDF and return the extracted profile + first-pass analysis."""
+    await emit("extract", "started")
+    payload = {"document_filename": document_name}
+    result: ExtractionResult = await _run_stage(
+        "extract", prompts.EXTRACT, payload, ExtractionResult, document=document, document_name=document_name,
+    )
+    await emit("extract", "done")
+    return result
+
+
 async def run(request: AssessRequest, emit: Emit) -> AssessmentReport:
     base = {
         "application_profile": request.profile.model_dump(),
         "scanner_signals": [s.model_dump() for s in request.signals],
     }
 
-    await emit("analyze", "started")
-    analysis: ArchitectureAnalysis = await _run_stage("analyze", prompts.ANALYZE, base, ArchitectureAnalysis)
-    await emit("analyze", "done")
+    if request.extraction is not None:
+        # Document was ingested upstream - skip the analyze stage, use its analysis.
+        analysis = request.extraction.analysis
+        base["extracted_from_document"] = request.extraction.document_title
+    else:
+        await emit("analyze", "started")
+        analysis = await _run_stage("analyze", prompts.ANALYZE, base, ArchitectureAnalysis)
+        await emit("analyze", "done")
 
     with_analysis = base | {"architecture_analysis": analysis.model_dump()}
 
