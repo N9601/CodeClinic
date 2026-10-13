@@ -18,6 +18,7 @@ from .schemas import (
     ArchitectureAnalysis,
     AssessmentReport,
     AssessRequest,
+    ComplianceAnalysis,
     ExtractionResult,
     ModernizationPlan,
     ReadinessAssessment,
@@ -154,4 +155,22 @@ async def run(request: AssessRequest, emit: Emit) -> AssessmentReport:
         report.source_document = request.extraction.document_title
         report.extraction_confidence = request.extraction.profile.confidence
     await emit("assemble", "done")
+
+    # Stage 4 (optional): compliance gap analysis for GxP / regulated apps.
+    if _needs_compliance(report):
+        try:
+            await emit("compliance", "started")
+            compliance = await _run_stage(
+                "compliance", prompts.COMPLIANCE, {"report": report.model_dump(mode="json")}, ComplianceAnalysis,
+            )
+            report.compliance = compliance
+            await emit("compliance", "done")
+        except PipelineError:
+            # Non-fatal: the report is already complete without the compliance tab.
+            await emit("compliance", "done")
+
     return report
+
+
+def _needs_compliance(report: AssessmentReport) -> bool:
+    return report.profile.gxp_relevant or report.summary.gxp_critical or any(r.gxp_related for r in report.risks)
