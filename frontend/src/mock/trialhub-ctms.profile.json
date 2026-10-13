@@ -1,0 +1,18 @@
+{
+  "id": "trialhub-ctms",
+  "tagline": "Clinical trial monolith on Java EE + WebLogic + Oracle 11g",
+  "profile": {
+    "name": "TrialHub CTMS",
+    "business_function": "Clinical Trial Management System for study planning, site management, subject enrolment tracking and monitoring visits",
+    "description": "In-house Java EE monolith built in 2011. Manages ~120 active studies, investigator sites, enrolment milestones and monitoring visit reports. Supports inspection readiness for FDA/EMA audits.",
+    "tech_stack": "Java 7, EJB 3.0, JSF 1.2 + RichFaces, Hibernate 3, Apache Ant build, deployed as a single EAR (~180k lines of code)",
+    "database": "Oracle Database 11g R2 Enterprise, ~1.2 TB, heavy use of PL/SQL packages and Oracle-specific SQL",
+    "hosting": "On-premises Oracle WebLogic 10.3.6 cluster (4 nodes) on Red Hat Enterprise Linux 6",
+    "integrations": "EDC system (SOAP web services), IRT/randomisation vendor (SFTP files), safety database (nightly batch ETL via Quartz jobs), SharePoint for TMF documents, LDAP authentication",
+    "users": "~1,800 users: clinical operations staff, CRAs and site users in 25 countries",
+    "data_classification": "GCP records with pseudonymised subject data (GDPR special category data); 21 CFR Part 11 audit trails; 25-year retention for trial master file records",
+    "gxp_relevant": true,
+    "pain_points": "Release cycle is 6 months because the full EAR must be revalidated; WebLogic licence costs; Oracle 11g unsupported; Java 7 security findings; poor performance for sites in APAC",
+    "constraints": "Subject data for EU sites must stay in the EU; inspection-ready audit trail must be preserved through migration; 2 studies in database lock during Q1"
+  }
+}
