@@ -3,7 +3,7 @@ import { MessageSquare, RefreshCw, Send, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { ApiError, fetchChatSeeds, getHealth, streamChat } from '../../api'
+import { ApiError, fetchChatHistory, fetchChatSeeds, getHealth, saveChatHistory, streamChat } from '../../api'
 import type { AssessmentReport, ChatMessage, ChatSeed } from '../../types'
 import { Button, cx, Spinner } from '../ui'
 
@@ -18,9 +18,13 @@ function providerLabel(p: ChatProvider | null): string {
   return 'Powered by Claude'
 }
 
+// Chat history is persisted on the backend (data/chats/<report-id>.json), so
+// opening a past assessment restores its full conversation. We keep a tiny
+// sessionStorage cache so the panel paints instantly on re-open, then
+// reconcile with the backend copy.
 const STORAGE_PREFIX = 'cc-chat:'
 
-function loadMessages(reportId: string): ChatMessage[] {
+function cachedMessages(reportId: string): ChatMessage[] {
   try {
     const raw = sessionStorage.getItem(STORAGE_PREFIX + reportId)
     if (!raw) return []
@@ -32,7 +36,7 @@ function loadMessages(reportId: string): ChatMessage[] {
   return []
 }
 
-function saveMessages(reportId: string, messages: ChatMessage[]) {
+function cacheMessages(reportId: string, messages: ChatMessage[]) {
   try {
     sessionStorage.setItem(STORAGE_PREFIX + reportId, JSON.stringify(messages))
   } catch {
@@ -43,7 +47,7 @@ function saveMessages(reportId: string, messages: ChatMessage[]) {
 export function ChatPanel({ report }: { report: AssessmentReport }) {
   const [open, setOpen] = useState(false)
   const [provider, setProvider] = useState<ChatProvider | null>(cachedProvider)
-  const [messages, setMessages] = useState<ChatMessage[]>(() => loadMessages(report.id))
+  const [messages, setMessages] = useState<ChatMessage[]>(() => cachedMessages(report.id))
   const [seeds, setSeeds] = useState<ChatSeed[] | null>(null)
   const [seedsError, setSeedsError] = useState<string | null>(null)
   const [input, setInput] = useState('')
@@ -74,9 +78,10 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
     }
   }, [])
 
-  // Reset state when the report id changes.
+  // Reset state when the report id changes, then hydrate from the backend
+  // (so opening a past assessment restores its chat history across reloads).
   useEffect(() => {
-    setMessages(loadMessages(report.id))
+    setMessages(cachedMessages(report.id))
     setSeeds(null)
     setSeedsError(null)
     setMessageError(null)
@@ -84,11 +89,27 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
     setStreaming(false)
     abortRef.current?.abort()
     abortRef.current = null
+
+    let cancelled = false
+    fetchChatHistory(report.id)
+      .then((h) => {
+        if (cancelled) return
+        if (Array.isArray(h.messages) && h.messages.length > 0) {
+          setMessages(h.messages)
+          cacheMessages(report.id, h.messages)
+        }
+      })
+      .catch(() => { /* non-fatal; cached messages still render */ })
+    return () => { cancelled = true }
   }, [report.id])
 
+  // Mirror to sessionStorage for instant repaint, and persist to the backend
+  // (fire-and-forget) so refreshes and open-from-recent restore the thread.
   useEffect(() => {
-    saveMessages(report.id, messages)
-  }, [report.id, messages])
+    cacheMessages(report.id, messages)
+    if (messages.length === 0 || streaming) return
+    saveChatHistory(report.id, messages).catch(() => { /* non-fatal */ })
+  }, [report.id, messages, streaming])
 
   // Fetch seeds when panel opens.
   useEffect(() => {
