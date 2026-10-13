@@ -22,9 +22,15 @@ from fastapi import FastAPI, File, HTTPException, UploadFile  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import PlainTextResponse, StreamingResponse  # noqa: E402
 
-from . import chat, pipeline, render  # noqa: E402
+from pydantic import BaseModel  # noqa: E402
+
+from . import chat, pipeline, portfolio, render  # noqa: E402
 from .scanner import scan_zip  # noqa: E402
 from .schemas import AppProfile, AssessmentReport, AssessRequest, ScanResult  # noqa: E402
+
+
+class PortfolioRequest(BaseModel):
+    report_ids: list[str]
 
 SAMPLES = BACKEND / "samples"
 REPORTS_DIR = BACKEND / "data" / "reports"
@@ -319,6 +325,22 @@ async def assess_stream(request: AssessRequest) -> StreamingResponse:
 @app.get("/api/reports/{report_id}")
 def get_report(report_id: str) -> AssessmentReport:
     return _load_report(report_id)
+
+
+@app.post("/api/portfolio")
+def portfolio_view(request: PortfolioRequest) -> portfolio.PortfolioView:
+    reports = [_load_report(rid) for rid in request.report_ids]
+    try:
+        return portfolio.build(reports)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.get("/api/portfolio/samples")
+def portfolio_from_samples() -> portfolio.PortfolioView:
+    """Convenience endpoint for the demo: builds a portfolio view over every cached sample report."""
+    report_ids = [f"sample-{p.stem}" for p in sorted((SAMPLES / "reports").glob("*.json"))]
+    return portfolio.build([_load_report(rid) for rid in report_ids])
 
 
 @app.get("/api/reports/{report_id}/chat/seeds")
