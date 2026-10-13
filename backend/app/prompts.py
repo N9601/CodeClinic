@@ -30,6 +30,28 @@ def system_prompt() -> str:
     return f"{_ROLE}\n\n{knowledge_text()}"
 
 
+EXTRACT = """Stage 0 - extract from an uploaded architecture assessment document.
+
+The PDF attached to this user turn is an internal architecture / modernization \
+assessment of ONE legacy application. Read it in full, then produce:
+
+- document_title and document_summary from the actual contents.
+- pages_estimated: your best estimate of its length.
+- profile: a complete AppProfile. Every field must come from the document - do not \
+invent business function, data classification, GxP relevance, users or constraints. \
+For each field, add a short citation to source_pages (e.g. 'business_function' -> \
+'p.2 §2.1'). Pages are 1-indexed. Set gxp_relevant only if the document says so.
+- analysis: a first-pass ArchitectureAnalysis of the current state, grounded in \
+the document. Use section 4-7 wording ("Logical architecture", "Physical", \
+"Technology stack", "Integrations", etc.) if present. Components, edges, tech \
+inventory and tech debt all come from the document.
+- confidence: 'high' if the document is detailed and consistent; 'medium' if some \
+sections are thin; 'low' if major areas (integrations, data, operations) are \
+missing. State what is thin in confidence_notes.
+
+Never pad with generic cloud advice at this stage. Stage 2 (assess) and stage 3 \
+(recommend) run after this one."""
+
 ANALYZE = """Stage 1 of 3 - analyze the current architecture.
 
 Produce the application's current-state architecture:
