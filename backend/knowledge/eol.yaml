@@ -1,0 +1,47 @@
+# End-of-support reference for common legacy stacks (vendor mainstream/extended
+# support end). Grounding for the technology_currency score - verify against
+# vendor lifecycle pages before using in a real migration decision.
+as_of: 2026-10
+end_of_life:
+  - {tech: Windows Server 2008 / 2008 R2, ended: 2020-01}
+  - {tech: Windows Server 2012 / 2012 R2, ended: 2023-10}
+  - {tech: SQL Server 2008 / 2008 R2, ended: 2019-07}
+  - {tech: SQL Server 2012, ended: 2022-07}
+  - {tech: SQL Server 2014, ended: 2024-07}
+  - {tech: SQL Server 2016, ended: 2026-07}
+  - {tech: ".NET Framework 4.5.2 / 4.6 / 4.6.1", ended: 2022-04}
+  - {tech: .NET Core 3.1, ended: 2022-12}
+  - {tech: .NET 6, ended: 2024-11}
+  - {tech: Visual Basic 6 IDE, ended: 2008-04}
+  - {tech: Internet Explorer 11 desktop app, ended: 2022-06}
+  - {tech: Oracle Database 11g R2, ended: 2020-12}
+  - {tech: Oracle Database 12c R1, ended: 2022-07}
+  - {tech: Oracle WebLogic Server 10.3.6, ended: 2021-12}
+  - {tech: Apache Tomcat 7, ended: 2021-03}
+  - {tech: Apache Tomcat 8.5, ended: 2024-03}
+  - {tech: Apache Struts 1, ended: 2013-04}
+  - {tech: Spring Framework 4.x, ended: 2020-12}
+  - {tech: PHP 5.x, ended: 2018-12}
+  - {tech: PHP 7.4, ended: 2022-11}
+  - {tech: PHP 8.0, ended: 2023-11}
+  - {tech: PHP 8.1, ended: 2025-12}
+  - {tech: Python 2.7, ended: 2020-01}
+  - {tech: Python 3.8, ended: 2024-10}
+  - {tech: Python 3.9, ended: 2025-10}
+  - {tech: Node.js 16, ended: 2023-09}
+  - {tech: Node.js 18, ended: 2025-04}
+  - {tech: Node.js 20, ended: 2026-04}
+  - {tech: AngularJS 1.x, ended: 2021-12}
+  - {tech: MySQL 5.6, ended: 2021-02}
+  - {tech: MySQL 5.7, ended: 2023-10}
+  - {tech: CentOS 6, ended: 2020-11}
+  - {tech: CentOS 7, ended: 2024-06}
+  - {tech: CentOS 8, ended: 2021-12}
+  - {tech: RHEL 6 (maintenance support), ended: 2020-11}
+  - {tech: RHEL 7 (maintenance support), ended: 2024-06}
+legacy_but_supported:
+  - {tech: Java 8, note: Commercial support only via paid/extended programs; most libraries have moved on}
+  - {tech: Java 11, note: Oracle premier support ended 2023-09; plan an upgrade to 17 or 21}
+  - {tech: .NET Framework 4.8 / 4.8.1, note: Supported with the Windows OS lifecycle but frozen - no new features; WebForms/WCF server have no modern .NET port}
+  - {tech: Java EE javax.* APIs, note: Superseded by Jakarta EE (jakarta.* namespace) - upgrades require package renames}
+  - {tech: jQuery below 3.5, note: Known XSS vulnerabilities (CVE-2020-11022 and earlier)}
