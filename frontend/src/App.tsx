@@ -160,10 +160,10 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--color-teal-50)_0%,_transparent_55%)]">
+    <div className="min-h-screen bg-white">
       <Header health={health} onHome={screen === 'running' ? undefined : goIntake} />
       {screen !== 'running' && (
-        <div className="no-print border-b border-slate-200/60 bg-white/60">
+        <div className="no-print border-b border-slate-200/60 bg-white">
           <nav className="mx-auto flex max-w-7xl items-center gap-1 px-4 py-2 sm:px-6 lg:px-8" aria-label="Primary">
             <NavTab
               icon={Stethoscope}
@@ -226,7 +226,7 @@ function NavTab({
       type="button"
       onClick={onClick}
       className={cx(
-        'inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
+        'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
         active ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
       )}
     >

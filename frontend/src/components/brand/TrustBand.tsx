@@ -1,4 +1,5 @@
-// Dark full-width band with regulatory frameworks (replaces logo wall).
+// Muted dark trust band with regulatory frameworks, separated by thin dots.
+import { Fragment } from 'react'
 import { cx } from '../ui'
 
 const FRAMEWORKS: Array<{ name: string; hint: string }> = [
@@ -12,26 +13,25 @@ const FRAMEWORKS: Array<{ name: string; hint: string }> = [
 
 export function TrustBand({ className }: { className?: string }) {
   return (
-    <section className={cx('relative no-print bg-slate-950 py-10 text-slate-200', className)}>
-      {/* crosshair corner marks (match BlueprintFrame) */}
-      <span className="bp-corner" style={{ top: -7, left: -7 }} aria-hidden />
-      <span className="bp-corner" style={{ top: -7, right: -7 }} aria-hidden />
-      <span className="bp-corner" style={{ bottom: -7, left: -7 }} aria-hidden />
-      <span className="bp-corner" style={{ bottom: -7, right: -7 }} aria-hidden />
-      <div className="mx-auto flex max-w-7xl flex-col items-center gap-5 px-4 text-center sm:px-6 lg:px-8">
-        <span className="annotation" style={{ color: 'var(--color-emerald-400)' }}>Compliance-aware</span>
-        <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+    <section className={cx('no-print bg-slate-950 py-8 text-slate-300', className)}>
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 text-center sm:px-6 lg:px-8">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-400">
+          Compliance-aware
+        </span>
+        <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-400">
           {FRAMEWORKS.map((f, i) => (
-            <li key={f.name} className="flex items-center gap-6">
-              <span
-                className="tb-framework relative font-display text-sm uppercase tracking-[0.25em] text-slate-300 transition hover:text-emerald-400 hover:underline hover:decoration-emerald-400 hover:underline-offset-4 sm:text-base"
-                data-hint={f.hint}
-                tabIndex={0}
-              >
-                {f.name}
-              </span>
-              {i < FRAMEWORKS.length - 1 && <span className="text-slate-800" aria-hidden>·</span>}
-            </li>
+            <Fragment key={f.name}>
+              <li>
+                <span
+                  className="tb-framework relative font-medium tracking-wide text-slate-200 transition hover:text-emerald-300"
+                  data-hint={f.hint}
+                  tabIndex={0}
+                >
+                  {f.name}
+                </span>
+              </li>
+              {i < FRAMEWORKS.length - 1 && <li aria-hidden className="size-1 rounded-full bg-slate-700" />}
+            </Fragment>
           ))}
         </ul>
       </div>

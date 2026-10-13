@@ -13,23 +13,23 @@ function StatusPill({ health }: { health: HealthState }) {
   let pulse = false
 
   if (health.status === 'checking') {
-    label = 'Connecting...'
+    label = 'Connecting'
     title = 'Checking the CodeClinic API'
     tone = 'bg-slate-50 text-slate-600 ring-slate-200'
     dot = 'bg-slate-400'
   } else if (health.status === 'offline') {
-    label = 'Demo mode · offline'
+    label = 'Demo'
     title = 'Backend unreachable - using the bundled LabTrack LIMS sample report'
     tone = 'bg-amber-50 text-amber-800 ring-amber-200'
     dot = 'bg-amber-500'
   } else if (isLive(health)) {
-    label = 'Live · Claude'
+    label = 'Live'
     title = `Live analysis with ${health.health.model}`
-    tone = 'bg-emerald-50 text-emerald-800 ring-emerald-200'
+    tone = 'bg-emerald-50 text-emerald-700 ring-emerald-200'
     dot = 'bg-emerald-500'
     pulse = true
   } else {
-    label = 'Demo mode'
+    label = 'Demo'
     title = 'No API key configured - reports are served from the cache'
     tone = 'bg-amber-50 text-amber-800 ring-amber-200'
     dot = 'bg-amber-500'
@@ -38,11 +38,14 @@ function StatusPill({ health }: { health: HealthState }) {
   return (
     <span
       title={title}
-      className={cx('inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset', tone)}
+      className={cx(
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 ring-inset',
+        tone,
+      )}
     >
-      <span className="relative flex size-2">
+      <span className="relative flex size-1.5">
         {pulse && <span className={cx('absolute inline-flex size-full animate-ping rounded-full opacity-60', dot)} />}
-        <span className={cx('relative inline-flex size-2 rounded-full', dot)} />
+        <span className={cx('relative inline-flex size-1.5 rounded-full', dot)} />
       </span>
       {label}
     </span>
@@ -51,24 +54,25 @@ function StatusPill({ health }: { health: HealthState }) {
 
 export function Header({ health, onHome }: { health: HealthState; onHome?: () => void }) {
   return (
-    <header className="no-print sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
+    <header className="no-print sticky top-0 z-40 border-b border-slate-200/60 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <button
           type="button"
           onClick={onHome}
           disabled={!onHome}
-          className="flex min-w-0 items-center gap-3 text-left disabled:cursor-default"
+          className="flex min-w-0 items-center gap-2.5 text-left disabled:cursor-default"
           title={onHome ? 'Start a new diagnosis' : undefined}
         >
-          <Logo size={40} />
+          <Logo size={28} />
           <span className="min-w-0">
-            <span className="block text-lg font-bold leading-tight tracking-tight text-slate-900">
-              Code<span className="text-emerald-600">Clinic</span>
+            <span className="block text-[15px] font-semibold leading-tight tracking-tight text-slate-900">
+              CodeClinic
             </span>
-            <span className="hidden truncate text-xs text-slate-500 md:block">{TAGLINE}</span>
           </span>
         </button>
-        <StatusPill health={health} />
+        <div className="flex items-center gap-3">
+          <StatusPill health={health} />
+        </div>
       </div>
     </header>
   )

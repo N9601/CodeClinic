@@ -1,4 +1,5 @@
-// Decorative dashed frame with crosshair corner markers. Pure CSS.
+// Clean content frame used for Mermaid diagrams. Was previously a dashed blueprint;
+// kept the component so callers don't change, but visuals are now modern SaaS.
 import type { ReactNode } from 'react'
 import { cx } from '../ui'
 
@@ -14,16 +15,11 @@ export function BlueprintFrame({
   return (
     <div
       className={cx(
-        'relative rounded-2xl border border-dashed border-emerald-400/50 bg-white/60',
-        padded && 'p-6 sm:p-10',
+        'relative overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]',
+        padded && 'p-5 sm:p-6',
         className,
       )}
     >
-      {/* crosshair markers */}
-      <span className="bp-corner" style={{ top: -7, left: -7 }} aria-hidden />
-      <span className="bp-corner" style={{ top: -7, right: -7 }} aria-hidden />
-      <span className="bp-corner" style={{ bottom: -7, left: -7 }} aria-hidden />
-      <span className="bp-corner" style={{ bottom: -7, right: -7 }} aria-hidden />
       {children}
     </div>
   )

@@ -1,4 +1,4 @@
-// 5-panel horizontal process strip, Medscribe-style. CSS-only (no SVG).
+// Modern SaaS process strip: numbered steps, clean dividers.
 import { cx } from '../ui'
 
 export interface Step {
@@ -10,7 +10,7 @@ export function StepStrip({ steps, className }: { steps: Step[]; className?: str
   return (
     <div
       className={cx(
-        'flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white md:flex-row',
+        'flex flex-col overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] md:flex-row',
         className,
       )}
     >
@@ -19,12 +19,18 @@ export function StepStrip({ steps, className }: { steps: Step[]; className?: str
           key={s.title + i}
           className={cx(
             'relative flex min-w-0 flex-1 flex-col gap-2 p-5 sm:p-6',
-            // dashed divider between panels: bottom on mobile, right on md+
-            i < steps.length - 1 && 'border-b border-dashed border-slate-200 md:border-b-0 md:border-r',
+            i < steps.length - 1 && 'border-b border-slate-200/70 md:border-b-0 md:border-r',
           )}
         >
-          <span className="annotation">Step {String(i + 1).padStart(2, '0')}</span>
-          <h3 className="font-display text-xl font-bold uppercase tracking-tight text-slate-900 sm:text-2xl">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex size-6 items-center justify-center rounded-full bg-slate-900 text-[11px] font-semibold text-white">
+              {i + 1}
+            </span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Step {String(i + 1).padStart(2, '0')}
+            </span>
+          </div>
+          <h3 className="font-display text-base font-semibold tracking-tight text-slate-900">
             {s.title}
           </h3>
           <p className="text-sm leading-relaxed text-slate-500">{s.body}</p>
