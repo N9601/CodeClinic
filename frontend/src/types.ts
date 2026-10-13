@@ -260,6 +260,96 @@ export interface AssessmentReport {
   diagrams: Diagrams
   source_document?: string | null
   extraction_confidence?: ConfidenceLevel | null
+  compliance?: ComplianceAnalysis | null
+}
+
+// ------------------------------------------------------------------ compliance (Objective 6)
+
+export type ComplianceSeverity = 'minor' | 'major' | 'critical'
+export type CompliancePosture = 'low_risk' | 'manageable' | 'elevated_risk'
+
+export interface ComplianceGap {
+  id: string
+  title: string
+  description: string
+  severity: ComplianceSeverity
+  gxp_related: boolean
+  frameworks: string[]
+  clauses: string[]
+  linked_risk_ids: string[]
+  linked_component_ids: string[]
+  mitigation: string
+  validation_activity: string
+}
+
+export interface ComplianceControl {
+  name: string
+  description: string
+  frameworks: string[]
+  clauses: string[]
+}
+
+export interface ComplianceAnalysis {
+  headline: string
+  overall_posture: CompliancePosture
+  gaps: ComplianceGap[]
+  required_controls: ComplianceControl[]
+  validation_strategy: string
+}
+
+// ------------------------------------------------------------------ chat (Ask the Advisor)
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface ChatSeed {
+  label: string
+  prompt: string
+}
+
+export interface ChatSeedsResponse {
+  seeds: ChatSeed[]
+}
+
+// ------------------------------------------------------------------ portfolio
+
+export interface PortfolioAppSummary {
+  report_id: string
+  name: string
+  tagline: string
+  target_cloud: CloudProvider
+  readiness: number
+  readiness_band: string
+  strategy: string
+  weeks: number
+  gxp_critical: boolean
+  critical_risks: number
+  high_risks: number
+  wave: 'now' | 'next' | 'later'
+  wave_label: string
+  priority_score: number
+  rationale: string
+}
+
+export interface PortfolioStats {
+  apps: number
+  gxp_apps: number
+  avg_readiness: number
+  total_weeks: number
+  strategy_mix: Record<string, number>
+  wave_counts: Record<string, number>
+  cloud_mix: Record<string, number>
+  total_critical_risks: number
+}
+
+export interface PortfolioView {
+  stats: PortfolioStats
+  apps: PortfolioAppSummary[]
+  waves: Record<'now' | 'next' | 'later', string[]>
+  gantt: string
+  headline: string
 }
 
 // ------------------------------------------------------------------ API envelopes (not in schemas.py)
