@@ -3,6 +3,7 @@ import {
   Cloud,
   Database,
   Download,
+  FileText,
   Gauge,
   LayoutDashboard,
   Network,
@@ -201,6 +202,26 @@ export function Report({
             <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{report.profile.name}</h1>
             {report.profile.business_function && (
               <p className="mt-1.5 max-w-3xl text-sm text-slate-600 sm:text-base">{report.profile.business_function}</p>
+            )}
+            {report.source_document && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Badge className="bg-slate-50 px-3 py-1 text-sm text-slate-700 ring-slate-200" icon={FileText}>
+                  Extracted from: {report.source_document}
+                </Badge>
+                {report.extraction_confidence && (
+                  <Badge
+                    className={cx(
+                      'px-3 py-1 text-sm capitalize',
+                      report.extraction_confidence === 'high' && 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+                      report.extraction_confidence === 'medium' && 'bg-amber-50 text-amber-800 ring-amber-200',
+                      report.extraction_confidence === 'low' && 'bg-red-50 text-red-700 ring-red-200',
+                    )}
+                    title={`${report.extraction_confidence} extraction confidence`}
+                  >
+                    {report.extraction_confidence} confidence
+                  </Badge>
+                )}
+              </div>
             )}
             <div className="mt-4 flex flex-wrap gap-2">
               <Badge className={cx(strat.badge, 'px-3 py-1 text-sm')} title={strat.hint}>
