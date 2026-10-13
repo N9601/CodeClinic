@@ -1,6 +1,6 @@
 // Portfolio screen - wave planning across every cached report.
 import { Cloud, FileText, Flag, Gauge, Layers, ShieldAlert, ShieldCheck } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { fetchPortfolioFromSamples } from '../api'
 import { BlueprintFrame } from '../components/brand/BlueprintFrame'
 import { SectionHeader } from '../components/brand/SectionHeader'
@@ -9,6 +9,82 @@ import { Mermaid } from '../components/Mermaid'
 import { Badge, Card, cx, Kpi } from '../components/ui'
 import { CLOUD_LABEL, strategyStyle } from '../lib/format'
 import type { PortfolioAppSummary, PortfolioView } from '../types'
+
+// Hand-drawn arrow (mirrors Hero's sketch arrow) placed between wave columns.
+function WaveArrow() {
+  return (
+    <>
+      {/* vertical for stacked (mobile) */}
+      <svg
+        aria-hidden
+        viewBox="0 0 12 32"
+        className="mx-auto block h-8 w-3 text-emerald-500 lg:hidden"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M6 2 C 5.4 8, 6.7 15, 5.8 26" />
+        <path d="M2.6 22 L 5.9 28.6 L 9.2 22.4" />
+      </svg>
+      {/* horizontal for desktop between columns */}
+      <svg
+        aria-hidden
+        viewBox="0 0 48 14"
+        className="hidden h-3.5 w-10 shrink-0 self-center text-emerald-500 lg:block"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M2 7.2 C 10 6.3, 22 7.9, 42 6.6" />
+        <path d="M37.2 2.8 L 43.4 6.7 L 37.6 10.9" />
+      </svg>
+    </>
+  )
+}
+
+// Small circular readiness indicator (32px) replacing the horizontal bar.
+function ReadinessRing({ score, band }: { score: number; band: string }) {
+  const size = 32
+  const stroke = 3.5
+  const r = (size - stroke) / 2
+  const circ = 2 * Math.PI * r
+  const pct = Math.max(0, Math.min(100, score))
+  const dash = (pct / 100) * circ
+  const color = score >= 70 ? 'text-emerald-500' : score >= 40 ? 'text-amber-500' : 'text-red-500'
+  return (
+    <div className="relative shrink-0" title={`Readiness ${score}/100 · ${band}`}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={color} aria-hidden>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke="currentColor"
+          strokeOpacity="0.15"
+          strokeWidth={stroke}
+          fill="none"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke="currentColor"
+          strokeWidth={stroke}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={`${dash} ${circ - dash}`}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      </svg>
+      <span className="absolute inset-0 grid place-items-center font-display text-[10px] font-bold tabular-nums text-slate-700">
+        {score}
+      </span>
+    </div>
+  )
+}
 
 const WAVE_ORDER: Array<'now' | 'next' | 'later'> = ['now', 'next', 'later']
 const WAVE_FALLBACK: Record<'now' | 'next' | 'later', string> = {
@@ -77,15 +153,20 @@ export function Portfolio({ onOpenReport }: { onOpenReport?: (reportId: string) 
           </div>
 
           {/* Waves */}
-          <div className="mt-8 grid gap-5 lg:grid-cols-3">
-            {WAVE_ORDER.map((wave) => {
+          <div className="mt-8 flex flex-col gap-5 lg:flex-row lg:items-stretch">
+            {WAVE_ORDER.map((wave, i) => {
               const ids = view.waves[wave] ?? []
               const apps = ids
                 .map((id) => view.apps.find((a) => a.report_id === id))
                 .filter((a): a is PortfolioAppSummary => !!a)
               const label = apps[0]?.wave_label ?? WAVE_FALLBACK[wave]
               return (
-                <WaveColumn key={wave} wave={wave} label={label} apps={apps} onOpenReport={onOpenReport} />
+                <Fragment key={wave}>
+                  <div className="min-w-0 flex-1">
+                    <WaveColumn wave={wave} label={label} apps={apps} onOpenReport={onOpenReport} />
+                  </div>
+                  {i < WAVE_ORDER.length - 1 && <WaveArrow />}
+                </Fragment>
               )
             })}
           </div>
@@ -155,11 +236,16 @@ function WaveColumn({
   onOpenReport?: (reportId: string) => void
 }) {
   return (
-    <div className={cx('rounded-2xl border p-4', WAVE_TONE[wave])}>
+    <div className={cx('h-full rounded-2xl border p-4', WAVE_TONE[wave])}>
       <div className="mb-3 flex flex-col gap-1">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-600">Wave</span>
         <div className="flex items-center gap-2">
-          <span className={cx('inline-block size-2 rounded-full', WAVE_DOT[wave])} aria-hidden />
+          <span className="relative inline-flex size-2.5 shrink-0" aria-hidden>
+            <span className={cx('absolute inset-0 animate-ping rounded-full opacity-60', WAVE_DOT[wave])} />
+            <span className={cx('relative inline-block size-2.5 rounded-full', WAVE_DOT[wave])} />
+          </span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-600">Wave</span>
+        </div>
+        <div className="flex items-center gap-2">
           <h3 className="font-display text-base font-bold uppercase tracking-wider text-slate-900">{label}</h3>
           <span className="ml-auto text-xs text-slate-500">{apps.length} app{apps.length === 1 ? '' : 's'}</span>
         </div>
@@ -179,28 +265,20 @@ function WaveColumn({
 
 function AppCard({ app, onOpenReport }: { app: PortfolioAppSummary; onOpenReport?: (reportId: string) => void }) {
   const strat = strategyStyle(app.strategy)
-  const readinessBarColor =
-    app.readiness >= 70 ? 'bg-emerald-500' : app.readiness >= 40 ? 'bg-amber-500' : 'bg-red-500'
   return (
     <Card className="p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md" padded={false}>
-      <div className="mb-2 flex items-start justify-between gap-3">
-        <div className="min-w-0">
+      <div className="mb-2 flex items-start gap-3">
+        <ReadinessRing score={app.readiness} band={app.readiness_band} />
+        <div className="min-w-0 flex-1">
           <h4 className="truncate text-sm font-semibold text-slate-900">{app.name}</h4>
           <p className="truncate text-xs text-slate-500">{app.tagline}</p>
+          <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            Readiness · {app.readiness_band}
+          </p>
         </div>
-        <Badge className={cx(strat.badge, 'px-2 py-0.5 text-[11px]')} title={strat.hint}>
+        <Badge className={cx(strat.badge, 'shrink-0 px-2 py-0.5 text-[11px]')} title={strat.hint}>
           {strat.label}
         </Badge>
-      </div>
-
-      <div className="mb-2">
-        <div className="flex items-center justify-between text-[11px] text-slate-500">
-          <span>Readiness · {app.readiness_band}</span>
-          <span className="font-semibold tabular-nums text-slate-800">{app.readiness}/100</span>
-        </div>
-        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
-          <div className={cx('h-full rounded-full', readinessBarColor)} style={{ width: `${Math.max(2, app.readiness)}%` }} />
-        </div>
       </div>
 
       <div className="mb-2 flex flex-wrap gap-1.5">
