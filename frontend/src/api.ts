@@ -3,6 +3,7 @@ import type {
   AssessmentReport,
   AssessRequest,
   HealthResponse,
+  IngestResponse,
   SampleDetail,
   SampleSummary,
   ScanResult,
@@ -102,6 +103,12 @@ export function scanZip(file: File): Promise<ScanResult> {
   const form = new FormData()
   form.append('file', file)
   return requestJson<ScanResult>('/api/scan', { method: 'POST', body: form })
+}
+
+export function ingestDocument(file: File): Promise<IngestResponse> {
+  const form = new FormData()
+  form.append('file', file)
+  return requestJson<IngestResponse>('/api/ingest', { method: 'POST', body: form })
 }
 
 export function assess(req: AssessRequest, signal?: AbortSignal): Promise<AssessmentReport> {
