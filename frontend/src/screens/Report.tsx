@@ -184,6 +184,7 @@ export function Report({
   }
 
   return (
+    <>
     <div className="mx-auto max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-8 cc-fade-in">
       {source === 'mock' && !offlineDismissed && (
         <div className="no-print mb-4 flex items-start gap-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200">
@@ -204,14 +205,16 @@ export function Report({
       )}
 
       {/* Report header */}
-      <section className="avoid-break mb-6 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+      <section className="avoid-break mb-6 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
         <div className="flex flex-col gap-6 p-5 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0 flex-1">
-            <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="annotation">Modernization Report</span>
+            <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">
+                Modernization report
+              </span>
               <span className="text-xs text-slate-400">Generated {report.generated_at}</span>
             </div>
-            <h1 className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+            <h1 className="font-display text-3xl font-semibold leading-[1.1] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
               {report.profile.name}
             </h1>
             {report.profile.business_function && (
@@ -300,10 +303,12 @@ export function Report({
       ) : (
         <>
           <div ref={anchorRef} aria-hidden />
-          <div
-            className="no-print sticky top-16 z-20 -mx-4 mb-6 border-b border-slate-200 bg-slate-50/90 px-4 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
-          >
-            <div role="tablist" aria-label="Report sections" className="no-scrollbar -mb-px flex gap-1 overflow-x-auto">
+          <div className="no-print sticky top-14 z-20 mb-6 border-b border-slate-200/70 bg-white/85 backdrop-blur-md">
+            <div
+              role="tablist"
+              aria-label="Report sections"
+              className="scrollbar-thin -mb-px flex gap-0 overflow-x-auto"
+            >
               {availableTabs.map((t) => {
                 const selected = t.key === tab
                 return (
@@ -315,38 +320,20 @@ export function Report({
                     aria-controls={`panel-${t.key}`}
                     onClick={() => selectTab(t.key)}
                     className={cx(
-                      'group relative flex shrink-0 items-center gap-2.5 px-3 py-3 text-left transition-all duration-200 sm:px-4',
+                      'group relative inline-flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-left transition-colors sm:px-4',
                       selected
-                        ? 'text-emerald-700'
-                        : 'text-slate-500 hover:text-slate-800',
+                        ? 'border-emerald-500 text-slate-900'
+                        : 'border-transparent text-slate-500 hover:text-slate-900',
                     )}
                   >
-                    <t.icon className={cx('size-4.5 transition-colors', selected ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-600')} aria-hidden />
-                    <span className="flex flex-col leading-tight">
-                      <span className="text-sm font-semibold">{t.label}</span>
-                      <span
-                        className={cx(
-                          'text-[10px] font-semibold uppercase tracking-wider',
-                          selected ? 'text-emerald-600/80' : 'text-slate-400',
-                        )}
-                      >
-                        {t.caption}
-                      </span>
-                    </span>
-                    {selected && (
-                      <svg
-                        aria-hidden
-                        viewBox="0 0 100 8"
-                        preserveAspectRatio="none"
-                        className="pointer-events-none absolute inset-x-2 -bottom-0.5 h-1.5 text-emerald-500"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                      >
-                        <path d="M3 5 C 18 2.5, 36 7, 52 4 S 82 2.5, 97 5" />
-                      </svg>
-                    )}
+                    <t.icon
+                      className={cx(
+                        'size-4 transition-colors',
+                        selected ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-600',
+                      )}
+                      aria-hidden
+                    />
+                    <span className="text-sm font-medium">{t.label}</span>
                   </button>
                 )
               })}
@@ -358,10 +345,9 @@ export function Report({
           </div>
         </>
       )}
-      <div className="mx-[-1rem] mt-12 sm:mx-[-1.5rem] lg:mx-[-2rem]">
-        <TrustBand />
-      </div>
       <ChatPanel report={report} />
     </div>
+    <TrustBand className="mt-12" />
+    </>
   )
 }

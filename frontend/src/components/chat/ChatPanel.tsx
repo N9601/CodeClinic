@@ -1,12 +1,10 @@
 // Ask-the-Advisor chat panel: floating button + slide-in SSE chat.
-import { MessageSquare, RefreshCw, Send, X } from 'lucide-react'
+import { MessageSquare, RefreshCw, Send, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { ApiError, fetchChatSeeds, getHealth, streamChat } from '../../api'
 import type { AssessmentReport, ChatMessage, ChatSeed } from '../../types'
-import { Logo } from '../brand/Logo'
-import { SectionHeader } from '../brand/SectionHeader'
 import { Button, cx, Spinner } from '../ui'
 
 type ChatProvider = 'claude' | 'gemini' | 'demo'
@@ -115,6 +113,32 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
     if (el) el.scrollTop = el.scrollHeight
   }, [messages, open, streaming])
 
+  // Lock body scroll ONLY on narrow screens (full-screen sheet). On desktop the panel is a side rail
+  // and page scroll should still work.
+  useEffect(() => {
+    if (!open) return
+    const mq = window.matchMedia('(max-width: 639px)')
+    const apply = () => {
+      document.body.classList.toggle('cc-no-scroll', open && mq.matches)
+    }
+    apply()
+    mq.addEventListener('change', apply)
+    return () => {
+      mq.removeEventListener('change', apply)
+      document.body.classList.remove('cc-no-scroll')
+    }
+  }, [open])
+
+  // Close on Escape when open.
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
   const sendPrompt = useCallback(
     async (prompt: string) => {
       const trimmed = prompt.trim()
@@ -199,44 +223,66 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="no-print group fixed bottom-6 right-6 z-40 inline-flex h-14 items-center gap-2 rounded-full bg-emerald-500 px-5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 ring-1 ring-inset ring-emerald-600/20 transition-all duration-200 hover:scale-[1.03] hover:bg-emerald-600 hover:shadow-xl hover:shadow-emerald-500/40"
+          className="no-print group fixed bottom-5 right-5 z-40 inline-flex h-12 items-center gap-2 rounded-full bg-slate-900 px-4 text-sm font-medium text-white shadow-lg shadow-slate-900/20 transition-all duration-200 hover:bg-slate-800 hover:shadow-xl"
           aria-label="Open the advisor chat"
         >
-          <MessageSquare className="size-5" aria-hidden />
+          <MessageSquare className="size-4" aria-hidden />
           Ask the advisor
         </button>
       )}
 
-      {/* Panel */}
+      {/* Backdrop on mobile only */}
+      {open && (
+        <div
+          className="no-print fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm transition-opacity sm:hidden"
+          onClick={() => setOpen(false)}
+          aria-hidden
+        />
+      )}
+
+      {/* Panel: full-screen sheet on mobile, right rail on >= sm. Uses dvh so iOS/Android chrome
+          doesn't push content off-screen, and max-width keeps it from overflowing viewport. */}
       <div
         className={cx(
-          'no-print fixed inset-0 z-50 flex flex-col border-l border-slate-200 bg-white shadow-2xl transition-transform duration-250 ease-out sm:inset-y-0 sm:left-auto sm:right-0 sm:w-full sm:max-w-[380px]',
+          'no-print fixed right-0 top-0 z-50 flex w-full flex-col overflow-hidden border-slate-200 bg-white shadow-2xl transition-transform duration-250 ease-out sm:border-l',
           open ? 'translate-x-0' : 'translate-x-full pointer-events-none',
         )}
+        style={{
+          height: '100dvh',
+          maxHeight: '100dvh',
+          maxWidth: 'min(400px, 100vw)',
+        }}
         role="dialog"
+        aria-modal="true"
         aria-label="Ask the advisor"
         aria-hidden={!open}
       >
-        <div className="flex items-start justify-between gap-3 border-b border-slate-200 bg-slate-50/80 p-4">
-          <SectionHeader
-            size="sm"
-            eyebrow="[ ASK THE ADVISOR ]"
-            title="TALK TO YOUR REPORT"
-          />
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+              <Sparkles className="size-4" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold text-slate-900">Ask the advisor</div>
+              <div className="truncate text-xs text-slate-500">Talk to your report</div>
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="shrink-0 rounded-md p-1.5 text-slate-500 hover:bg-slate-200 hover:text-slate-800"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"
             aria-label="Close chat"
           >
             <X className="size-4" />
           </button>
         </div>
 
-        {/* Seeds */}
-        {seeds && seeds.length > 0 && (
-          <div className="shrink-0 border-b border-slate-100 bg-emerald-50/40 px-4 py-3">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-emerald-700">Suggested questions</div>
+        {/* Seeds (visible only before the first message is sent) */}
+        {messages.length === 0 && seeds && seeds.length > 0 && (
+          <div className="shrink-0 border-b border-slate-200/70 bg-slate-50/50 px-4 py-3">
+            <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.1em] text-slate-500">
+              Suggested
+            </div>
             <div className="flex flex-wrap gap-1.5">
               {seeds.map((s, i) => (
                 <button
@@ -244,7 +290,7 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
                   type="button"
                   disabled={streaming}
                   onClick={() => sendPrompt(s.prompt)}
-                  className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                   title={s.prompt}
                 >
                   {s.label}
@@ -253,8 +299,8 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
             </div>
           </div>
         )}
-        {seeds === null && !seedsError && (
-          <div className="flex items-center gap-2 px-4 py-3 text-xs text-slate-500">
+        {messages.length === 0 && seeds === null && !seedsError && (
+          <div className="flex items-center gap-2 border-b border-slate-200/70 px-4 py-3 text-xs text-slate-500">
             <Spinner className="size-3.5 text-emerald-600" /> Loading seed questions…
           </div>
         )}
@@ -262,9 +308,8 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
         {/* Messages */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
           {messages.length === 0 ? (
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 text-center">
-              <Logo size={96} className="opacity-30" />
-              <p className="max-w-[260px] text-sm text-slate-500">
+            <div className="mt-6 text-left">
+              <p className="text-sm leading-relaxed text-slate-500">
                 Ask anything about this report — strategy, risks, timeline, compliance.
               </p>
             </div>
@@ -306,13 +351,13 @@ export function ChatPanel({ report }: { report: AssessmentReport }) {
               disabled={streaming}
               rows={2}
               placeholder={streaming ? 'Advisor is thinking…' : 'Ask about this report… (Enter sends, Shift+Enter = newline)'}
-              className="min-h-[52px] flex-1 resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:bg-slate-50"
+              className="min-h-[52px] flex-1 resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/5 disabled:bg-slate-50"
             />
             <button
               type="button"
               onClick={onSend}
               disabled={streaming || !input.trim()}
-              className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
               aria-label="Send"
             >
               <Send className="size-4" />
@@ -331,7 +376,7 @@ function MessageBubble({ message, showCaret }: { message: ChatMessage; showCaret
   if (message.role === 'user') {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-emerald-500 px-3.5 py-2 text-sm leading-relaxed text-white shadow-sm">
+        <div className="max-w-[85%] rounded-2xl rounded-br-md bg-slate-900 px-3.5 py-2 text-sm leading-relaxed text-white">
           {message.content}
         </div>
       </div>
@@ -339,10 +384,7 @@ function MessageBubble({ message, showCaret }: { message: ChatMessage; showCaret
   }
   return (
     <div className="flex justify-start">
-      <div
-        className="max-w-[90%] rounded-2xl rounded-bl-sm bg-white px-3.5 py-2 text-sm leading-relaxed text-slate-800 shadow-sm"
-        style={{ borderLeft: '3px dashed #10b981' }}
-      >
+      <div className="max-w-[90%] rounded-2xl rounded-bl-md border border-slate-200 bg-white px-3.5 py-2 text-sm leading-relaxed text-slate-800">
         {message.content ? (
           <div className="cc-chat-md">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>

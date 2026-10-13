@@ -10,39 +10,15 @@ import { Badge, Card, cx, Kpi } from '../components/ui'
 import { CLOUD_LABEL, strategyStyle } from '../lib/format'
 import type { PortfolioAppSummary, PortfolioView } from '../types'
 
-// Hand-drawn arrow (mirrors Hero's sketch arrow) placed between wave columns.
+// Clean chevron between wave columns.
 function WaveArrow() {
   return (
-    <>
-      {/* vertical for stacked (mobile) */}
-      <svg
-        aria-hidden
-        viewBox="0 0 12 32"
-        className="mx-auto block h-8 w-3 text-emerald-500 lg:hidden"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M6 2 C 5.4 8, 6.7 15, 5.8 26" />
-        <path d="M2.6 22 L 5.9 28.6 L 9.2 22.4" />
-      </svg>
-      {/* horizontal for desktop between columns */}
-      <svg
-        aria-hidden
-        viewBox="0 0 48 14"
-        className="hidden h-3.5 w-10 shrink-0 self-center text-emerald-500 lg:block"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M2 7.2 C 10 6.3, 22 7.9, 42 6.6" />
-        <path d="M37.2 2.8 L 43.4 6.7 L 37.6 10.9" />
-      </svg>
-    </>
+    <span
+      aria-hidden
+      className="flex shrink-0 items-center justify-center text-slate-300 lg:self-center"
+    >
+      <span className="text-xl font-light lg:rotate-0">→</span>
+    </span>
   )
 }
 
@@ -108,10 +84,11 @@ export function Portfolio({ onOpenReport }: { onOpenReport?: (reportId: string) 
   }, [])
 
   return (
+    <>
     <div className="mx-auto max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-8 cc-fade-in">
       <SectionHeader
-        eyebrow="[ WAVE PLANNING ]"
-        title="MIGRATION PORTFOLIO"
+        eyebrow="Wave planning"
+        title="Migration portfolio"
         subtitle={view?.headline ?? 'Prioritizing cached assessments across waves.'}
       />
 
@@ -141,10 +118,10 @@ export function Portfolio({ onOpenReport }: { onOpenReport?: (reportId: string) 
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-            <span className="annotation">[ STRATEGY MIX ]</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Strategy mix</span>
             <MixPills mix={view.stats.strategy_mix} styleFn={(k) => strategyStyle(k).badge} labelFn={(k) => strategyStyle(k).label} />
             <span className="mx-2 h-4 w-px bg-slate-200" />
-            <span className="annotation">[ CLOUD MIX ]</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Cloud mix</span>
             <MixPills
               mix={view.stats.cloud_mix}
               styleFn={() => 'bg-sky-50 text-sky-700 ring-sky-200'}
@@ -173,7 +150,7 @@ export function Portfolio({ onOpenReport }: { onOpenReport?: (reportId: string) 
 
           {/* Gantt */}
           <section className="mt-10">
-            <SectionHeader size="sm" eyebrow="[ TIMELINE ]" title="PORTFOLIO GANTT" />
+            <SectionHeader size="sm" eyebrow="Timeline" title="Portfolio Gantt" />
             <div className="mt-4">
               <BlueprintFrame>
                 <Mermaid code={view.gantt} label="Portfolio migration Gantt chart" />
@@ -183,10 +160,9 @@ export function Portfolio({ onOpenReport }: { onOpenReport?: (reportId: string) 
         </>
       )}
 
-      <div className="mx-[-1rem] mt-12 sm:mx-[-1.5rem] lg:mx-[-2rem]">
-        <TrustBand />
-      </div>
     </div>
+    <TrustBand className="mt-12" />
+    </>
   )
 }
 
