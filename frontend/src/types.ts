@@ -79,6 +79,31 @@ export interface AssessRequest {
   signals: Signal[]
   target_cloud: CloudProvider
   mode: AssessMode
+  extraction?: ExtractionResult | null
+}
+
+// ------------------------------------------------------------------ stage 0: ingest
+
+export type ConfidenceLevel = 'high' | 'medium' | 'low'
+
+export interface ExtractedProfile extends AppProfile {
+  source_pages: Record<string, string>
+  confidence: ConfidenceLevel
+  confidence_notes: string
+}
+
+export interface ExtractionResult {
+  document_title: string
+  document_summary: string
+  pages_estimated: number
+  profile: ExtractedProfile
+  analysis: ArchitectureAnalysis
+}
+
+export interface IngestResponse {
+  extraction: ExtractionResult
+  sample_id: string | null
+  source: 'live' | 'cached'
 }
 
 // ------------------------------------------------------------------ stage 1: analyze
@@ -233,6 +258,8 @@ export interface AssessmentReport {
   opportunities: Opportunity[]
   plan: ModernizationPlan
   diagrams: Diagrams
+  source_document?: string | null
+  extraction_confidence?: ConfidenceLevel | null
 }
 
 // ------------------------------------------------------------------ API envelopes (not in schemas.py)
@@ -259,7 +286,7 @@ export interface SampleDetail {
   has_cached_report: boolean
 }
 
-export type StageName = 'scan' | 'analyze' | 'assess' | 'recommend' | 'assemble'
+export type StageName = 'scan' | 'analyze' | 'extract' | 'assess' | 'recommend' | 'assemble'
 export type StageStatus = 'started' | 'done'
 
 export interface StageEvent {
