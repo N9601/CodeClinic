@@ -100,9 +100,9 @@ export function Kpi({
   accent?: string
 }) {
   return (
-    <Card className="flex flex-col gap-1 p-4 sm:p-5" padded={false}>
-      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-        {Icon && <Icon className="size-4 text-teal-600" aria-hidden />}
+    <Card className="flex flex-col gap-2 p-4 sm:p-5" padded={false}>
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+        {Icon && <Icon className="size-4 text-emerald-600" aria-hidden />}
         {label}
       </div>
       <div className={cx('text-2xl font-bold leading-tight sm:text-3xl', accent)}>{value}</div>

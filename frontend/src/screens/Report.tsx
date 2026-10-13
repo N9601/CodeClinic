@@ -315,24 +315,38 @@ export function Report({
                     aria-controls={`panel-${t.key}`}
                     onClick={() => selectTab(t.key)}
                     className={cx(
-                      'group flex shrink-0 items-center gap-2.5 border-b-2 px-3 py-3 text-left transition-colors sm:px-4',
+                      'group relative flex shrink-0 items-center gap-2.5 px-3 py-3 text-left transition-all duration-200 sm:px-4',
                       selected
-                        ? 'border-teal-600 text-teal-700'
-                        : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800',
+                        ? 'text-emerald-700'
+                        : 'text-slate-500 hover:text-slate-800',
                     )}
                   >
-                    <t.icon className={cx('size-4.5', selected ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-600')} aria-hidden />
+                    <t.icon className={cx('size-4.5 transition-colors', selected ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-600')} aria-hidden />
                     <span className="flex flex-col leading-tight">
                       <span className="text-sm font-semibold">{t.label}</span>
                       <span
                         className={cx(
                           'text-[10px] font-semibold uppercase tracking-wider',
-                          selected ? 'text-teal-600/80' : 'text-slate-400',
+                          selected ? 'text-emerald-600/80' : 'text-slate-400',
                         )}
                       >
                         {t.caption}
                       </span>
                     </span>
+                    {selected && (
+                      <svg
+                        aria-hidden
+                        viewBox="0 0 100 8"
+                        preserveAspectRatio="none"
+                        className="pointer-events-none absolute inset-x-2 -bottom-0.5 h-1.5 text-emerald-500"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                      >
+                        <path d="M3 5 C 18 2.5, 36 7, 52 4 S 82 2.5, 97 5" />
+                      </svg>
+                    )}
                   </button>
                 )
               })}

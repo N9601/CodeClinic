@@ -20,7 +20,7 @@ export function ReadinessGauge({ score, size = 'lg' }: { score: number; size?: '
         <path
           d="M 12 72 A 58 58 0 0 1 128 72"
           fill="none"
-          stroke={band.hex}
+          stroke="#10b981"
           strokeWidth="12"
           strokeLinecap="round"
           pathLength={100}
