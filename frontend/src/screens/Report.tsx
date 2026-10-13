@@ -141,7 +141,7 @@ export function Report({
   const [printAll, setPrintAll] = usePrintAll()
   const [downloading, setDownloading] = useState(false)
   const [offlineDismissed, setOfflineDismissed] = useState(false)
-  const tabsRef = useRef<HTMLDivElement>(null)
+  const anchorRef = useRef<HTMLDivElement>(null)
 
   const s = report.summary
   const strat = strategyStyle(s.overall_strategy)
@@ -149,10 +149,11 @@ export function Report({
 
   function selectTab(key: TabKey) {
     setTab(key)
-    const el = tabsRef.current
-    if (el) {
-      const top = el.getBoundingClientRect().top + window.scrollY - 64
-      if (window.scrollY > top) window.scrollTo({ top, behavior: 'smooth' })
+    // The tab bar is sticky, so measure a non-sticky anchor placed just above it.
+    const anchor = anchorRef.current
+    if (anchor) {
+      const top = anchor.getBoundingClientRect().top + window.scrollY - 64
+      if (window.scrollY > top) requestAnimationFrame(() => window.scrollTo({ top }))
     }
   }
 
@@ -263,11 +264,11 @@ export function Report({
         </div>
       ) : (
         <>
+          <div ref={anchorRef} aria-hidden />
           <div
-            ref={tabsRef}
             className="no-print sticky top-16 z-20 -mx-4 mb-6 border-b border-slate-200 bg-slate-50/90 px-4 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
           >
-            <div role="tablist" aria-label="Report sections" className="-mb-px flex gap-1 overflow-x-auto">
+            <div role="tablist" aria-label="Report sections" className="no-scrollbar -mb-px flex gap-1 overflow-x-auto">
               {TABS.map((t) => {
                 const selected = t.key === tab
                 return (

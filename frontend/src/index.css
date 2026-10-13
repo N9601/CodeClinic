@@ -76,3 +76,11 @@ body {
 .print-only {
   display: none;
 }
+
+/* Horizontal tab strips scroll on narrow screens without a visible scrollbar */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
