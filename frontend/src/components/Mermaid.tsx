@@ -18,7 +18,7 @@ function ensureInitialized() {
     theme: 'default',
     flowchart: { htmlLabels: true, curve: 'basis', padding: 12, nodeSpacing: 40, rankSpacing: 56 },
     gantt: {
-      leftPadding: 40,
+      leftPadding: 240, // room for section titles
       rightPadding: 40,
       barHeight: 24,
       barGap: 6,
