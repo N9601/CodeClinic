@@ -154,10 +154,10 @@ export function UploadPanel({
               type="button"
               onClick={tryBundledSample}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 underline-offset-2 hover:underline disabled:text-slate-400"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline disabled:text-slate-400"
             >
               <Sparkles className="size-4" aria-hidden />
-              Use bundled sample: LabTrack LIMS assessment PDF
+              Try with a sample document
             </button>
           </div>
           {error && (
@@ -190,7 +190,7 @@ export function UploadPanel({
 
       {extraction && editing && currentProfile && (
         <div className="space-y-3">
-          <div className="flex items-start justify-between gap-3 rounded-xl bg-teal-50 px-4 py-3 text-sm text-teal-900 ring-1 ring-teal-100">
+          <div className="flex items-start justify-between gap-3 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900 ring-1 ring-emerald-100">
             <span className="inline-flex items-start gap-2">
               <FileUp className="mt-0.5 size-4 shrink-0" aria-hidden />
               Editing the extracted profile. The uploaded document is still attached to the run.
