@@ -150,5 +150,8 @@ async def run(request: AssessRequest, emit: Emit) -> AssessmentReport:
         mode="live",
         model=MODEL,
     )
+    if request.extraction is not None:
+        report.source_document = request.extraction.document_title
+        report.extraction_confidence = request.extraction.profile.confidence
     await emit("assemble", "done")
     return report
