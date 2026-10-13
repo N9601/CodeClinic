@@ -1,0 +1,138 @@
+{
+  "target_cloud": "aws",
+  "analysis": {
+    "architecture_style": "Java EE monolith (single EAR) on a WebLogic cluster with PL/SQL-heavy Oracle",
+    "summary": "A 180k-line Java 7 / EJB 3.0 application with a JSF 1.2 UI, packaged as one EAR on a 4-node WebLogic 10.3.6 cluster and backed by a 1.2 TB Oracle 11g database with significant PL/SQL. Five integrations mix SOAP, SFTP, nightly Quartz ETL and LDAP. Because everything ships as one EAR, every release requires full re-validation, which drives the 6-month release cycle.",
+    "components": [
+      {"id": "web_ui", "name": "TrialHub UI", "type": "frontend", "technology": "JSF 1.2 + RichFaces", "description": "Study, site, enrolment and monitoring-visit screens.", "issues": ["RichFaces is end of life", "Slow for APAC sites (server-side rendering over long distances)"]},
+      {"id": "core_app", "name": "TrialHub Core (EAR)", "type": "backend", "technology": "Java 7, EJB 3.0, Hibernate 3 on WebLogic 10.3.6", "description": "All business logic: studies, sites, subjects, milestones, visit reports.", "issues": ["Single 180k-LOC EAR - any change re-validates everything", "Java 7 and WebLogic 10.3.6 are out of support", "Ant build, no automated tests"]},
+      {"id": "oracle_db", "name": "TrialHub Database", "type": "database", "technology": "Oracle Database 11g R2 Enterprise (~1.2 TB)", "description": "System of record incl. Part 11 audit trail tables.", "issues": ["Oracle 11g R2 extended support ended Dec 2020", "Heavy PL/SQL and Oracle-specific SQL"]},
+      {"id": "safety_etl", "name": "Safety Data ETL", "type": "batch", "technology": "Quartz jobs inside the EAR", "description": "Nightly transfer of SAE reconciliation data.", "issues": ["Runs inside the app server; failures are hard to see"]},
+      {"id": "edc", "name": "EDC System", "type": "external", "technology": "Vendor EDC (SOAP web services)", "description": "Source of enrolment and visit data.", "issues": ["SOAP contract tightly coupled to EJBs"]},
+      {"id": "irt", "name": "IRT / Randomisation Vendor", "type": "external", "technology": "SFTP file exchange", "description": "Randomisation and drug supply files.", "issues": ["SFTP server on-premises"]},
+      {"id": "safety_db", "name": "Safety Database", "type": "external", "technology": "Pharmacovigilance system", "description": "Receives reconciliation data.", "issues": []},
+      {"id": "sharepoint_tmf", "name": "SharePoint TMF", "type": "external", "technology": "SharePoint document libraries", "description": "Trial master file documents.", "issues": []},
+      {"id": "ldap", "name": "Corporate LDAP", "type": "identity", "technology": "LDAP authentication", "description": "Identity for staff; external site users managed manually.", "issues": ["No MFA; manual onboarding of site users"]}
+    ],
+    "edges": [
+      {"source": "web_ui", "target": "core_app", "label": "JSF postbacks"},
+      {"source": "core_app", "target": "oracle_db", "label": "JDBC + PL/SQL"},
+      {"source": "edc", "target": "core_app", "label": "SOAP web services"},
+      {"source": "irt", "target": "core_app", "label": "SFTP files"},
+      {"source": "safety_etl", "target": "oracle_db", "label": "Nightly extract"},
+      {"source": "safety_etl", "target": "safety_db", "label": "Reconciliation feed"},
+      {"source": "core_app", "target": "sharepoint_tmf", "label": "Document links"},
+      {"source": "core_app", "target": "ldap", "label": "LDAP bind"}
+    ],
+    "tech_inventory": [
+      {"name": "Java", "version": "7", "category": "language", "support_status": "end_of_life", "note": "Public and premier support long ended; security findings open"},
+      {"name": "Oracle WebLogic Server", "version": "10.3.6", "category": "app_server", "support_status": "end_of_life", "note": "Extended support ended December 2021; costly licences"},
+      {"name": "Oracle Database", "version": "11g R2", "category": "database", "support_status": "end_of_life", "note": "Extended support ended December 2020"},
+      {"name": "Red Hat Enterprise Linux", "version": "6", "category": "os", "support_status": "end_of_life", "note": "Maintenance support ended November 2020"},
+      {"name": "JSF + RichFaces", "version": "1.2 / 3.x", "category": "framework", "support_status": "end_of_life", "note": "RichFaces project ended; JSF 1.2 is obsolete"},
+      {"name": "Hibernate", "version": "3", "category": "library", "support_status": "end_of_life", "note": "Several majors behind; javax persistence"},
+      {"name": "Apache Ant", "version": "1.8", "category": "tool", "support_status": "unknown", "note": "Legacy build with no dependency management"}
+    ],
+    "tech_debt": [
+      "Single EAR means every change triggers full-system re-validation (6-month release cycle)",
+      "Business rules split between EJBs and Oracle PL/SQL packages",
+      "Batch ETL runs inside the application server",
+      "No automated tests; Ant build without dependency management",
+      "SOAP interfaces bound directly to EJB signatures"
+    ],
+    "regulated_data": "GCP records for ~120 active studies: subject enrolment (pseudonymised, GDPR special category), monitoring visit reports and Part 11 audit trails, with 25-year trial master file retention."
+  },
+  "assessment": {
+    "dimensions": [
+      {"key": "technology_currency", "score": 2, "rationale": "Runtime, app server, database and OS are all out of support.", "evidence": ["Java 7", "WebLogic 10.3.6 - EOL Dec 2021", "Oracle 11g R2 - EOL Dec 2020", "RHEL 6"]},
+      {"key": "modularity", "score": 3, "rationale": "One 180k-LOC EAR; modules exist in code but deploy and validate together.", "evidence": ["Single EAR deployment", "EJB-coupled SOAP interfaces"]},
+      {"key": "scalability", "score": 4, "rationale": "Clustered, but stateful JSF sessions and in-server batch jobs limit elasticity.", "evidence": ["4-node WebLogic cluster", "Quartz jobs inside the EAR", "APAC performance complaints"]},
+      {"key": "data_portability", "score": 3, "rationale": "1.2 TB of Oracle with heavy PL/SQL; easiest path is managed Oracle, not an engine change.", "evidence": ["Oracle 11g R2, ~1.2 TB", "Heavy PL/SQL and Oracle-specific SQL"]},
+      {"key": "integration_complexity", "score": 4, "rationale": "Five integrations across SOAP, SFTP, batch ETL, SharePoint and LDAP, several vendor-owned.", "evidence": ["EDC via SOAP", "IRT via SFTP", "Nightly ETL to safety DB"]},
+      {"key": "compliance_burden", "score": 2, "rationale": "GCP-critical with Part 11 audit trails, GDPR special category data, EU residency and 25-year retention.", "evidence": ["21 CFR Part 11 audit trails", "EU subject data must stay in the EU", "25-year TMF retention"]},
+      {"key": "devops_maturity", "score": 2, "rationale": "Ant builds, no automated tests and a 6-month validated release cycle.", "evidence": ["Apache Ant build", "6-month release cycle", "No automated tests"]}
+    ],
+    "risks": [
+      {"title": "Business logic locked in PL/SQL", "category": "technical", "likelihood": 4, "impact": 4, "gxp_related": true, "description": "Core rules live in Oracle packages, so moving engines or extracting services can change validated behaviour.", "mitigation": "Keep Oracle (managed) during replatform; extract services only behind characterisation tests."},
+      {"title": "Audit trail continuity during data migration", "category": "compliance", "likelihood": 3, "impact": 5, "gxp_related": true, "description": "Inspection-ready audit trails must survive the migration complete and unaltered.", "mitigation": "Validated migration with row counts and hash reconciliation of audit tables; QA review before go-live."},
+      {"title": "Disruption to studies in database lock", "category": "operational", "likelihood": 2, "impact": 5, "gxp_related": true, "description": "Two studies lock their databases in Q1; cutover then would jeopardise submissions.", "mitigation": "Schedule cutover after Q1 lock; freeze changes for locking studies."},
+      {"title": "EU subject data leaving the EU", "category": "compliance", "likelihood": 2, "impact": 5, "gxp_related": true, "description": "A single US-hosted deployment would breach residency commitments for EU subjects.", "mitigation": "Deploy in an EU region with region-restricting guardrails; document transfers in the DPIA."},
+      {"title": "Full re-validation for every release persists", "category": "compliance", "likelihood": 4, "impact": 3, "gxp_related": true, "description": "Without modular releases and automated tests, the cloud move alone will not shorten the 6-month cycle.", "mitigation": "Adopt CSA, automate regression OQ, and validate extracted services independently."},
+      {"title": "Container and Kubernetes skills gap", "category": "organizational", "likelihood": 4, "impact": 3, "gxp_related": false, "description": "The team knows WebLogic, not containers, EKS or IaC.", "mitigation": "Pair with a partner for the first two waves; platform team owns golden pipelines."},
+      {"title": "Oracle licensing on cloud", "category": "vendor", "likelihood": 3, "impact": 3, "gxp_related": false, "description": "Licence terms for Oracle on cloud can raise costs unexpectedly.", "mitigation": "Use licence-included managed Oracle and right-size; plan a later move of new services to PostgreSQL."},
+      {"title": "APAC site latency persists", "category": "technical", "likelihood": 3, "impact": 2, "gxp_related": false, "description": "Moving the same server-rendered UI to one region keeps APAC slow.", "mitigation": "Serve the new UI from a CDN and keep APIs chatty-free."}
+    ],
+    "opportunities": [
+      {"title": "Monthly instead of 6-monthly releases", "benefit": "Independently validated services and automated OQ shrink the release cycle.", "effort": "high"},
+      {"title": "Drop WebLogic licences", "benefit": "Open-source Jakarta EE runtime on containers removes WebLogic licence cost.", "effort": "medium"},
+      {"title": "Faster experience for global sites", "benefit": "A CDN-served UI improves performance in 25 countries.", "effort": "medium"},
+      {"title": "Inspection readiness on demand", "benefit": "Centralised immutable audit logs make inspection evidence quick to produce.", "effort": "low"},
+      {"title": "Self-service site onboarding", "benefit": "Federated identity with MFA replaces manual site-user management.", "effort": "medium"}
+    ]
+  },
+  "plan": {
+    "headline": "Refactor TrialHub in about a year: first replatform the EAR to containers and managed Oracle on AWS, then strangle out site-management and monitoring services - validating each increment so releases drop from 6-monthly to monthly.",
+    "overall_strategy": "refactor",
+    "patterns": [
+      {"name": "Strangler fig", "why": "Carve services out of the EAR one domain at a time, validating each small increment instead of the whole system."},
+      {"name": "Replatform to managed PaaS", "why": "Exit end-of-life WebLogic, Java 7 and Oracle 11g first while keeping PL/SQL logic intact."},
+      {"name": "API gateway facade", "why": "Decouples the EDC SOAP contract from EJBs and routes traffic between legacy and new services."},
+      {"name": "GxP landing zone", "why": "EU-resident, policy-guarded accounts with immutable audit logging for an inspected GCP system."}
+    ],
+    "component_strategies": [
+      {"component_id": "web_ui", "strategy": "refactor", "rationale": "Replace JSF/RichFaces with a modern SPA served from a CDN for global sites, module by module.", "target_service": "Amazon S3 + CloudFront"},
+      {"component_id": "core_app", "strategy": "refactor", "rationale": "Containerise the EAR on an open-source Jakarta EE runtime first, then extract site and monitoring services.", "target_service": "Amazon EKS"},
+      {"component_id": "oracle_db", "strategy": "replatform", "rationale": "Licence-included managed Oracle keeps PL/SQL unchanged; new services get their own PostgreSQL schemas.", "target_service": "Amazon RDS for Oracle"},
+      {"component_id": "safety_etl", "strategy": "refactor", "rationale": "Move batch out of the app server into observable, retryable managed pipelines.", "target_service": "AWS Step Functions + AWS Glue"},
+      {"component_id": "edc", "strategy": "retain", "rationale": "Vendor system stays; an API facade decouples its SOAP contract.", "target_service": "Amazon API Gateway facade"},
+      {"component_id": "irt", "strategy": "retain", "rationale": "Vendor keeps SFTP; the endpoint moves to a managed service.", "target_service": "AWS Transfer Family"},
+      {"component_id": "safety_db", "strategy": "retain", "rationale": "Out of scope; receives data from the new pipeline.", "target_service": "Existing safety database"},
+      {"component_id": "sharepoint_tmf", "strategy": "retain", "rationale": "TMF documents stay in SharePoint.", "target_service": "Existing SharePoint"},
+      {"component_id": "ldap", "strategy": "replatform", "rationale": "Federated identity with MFA for staff and external site users.", "target_service": "Amazon Cognito federated with corporate IdP"}
+    ],
+    "target_summary": "AWS in an EU region inside a GxP landing zone: a CDN-served SPA, the containerised core on Amazon EKS with extracted site and monitoring services, licence-included Amazon RDS for Oracle, an API Gateway facade for EDC, Transfer Family for IRT files, Step Functions/Glue for safety reconciliation, Cognito federation with MFA, and CloudTrail/CloudWatch for immutable audit logging.",
+    "target_components": [
+      {"id": "spa", "name": "TrialHub Web", "type": "frontend", "service": "Amazon S3 + CloudFront", "description": "SPA served close to global sites."},
+      {"id": "apigw", "name": "API Facade", "type": "integration", "service": "Amazon API Gateway", "description": "Single entry for UI and EDC; routes legacy vs new."},
+      {"id": "core", "name": "TrialHub Core (container)", "type": "backend", "service": "Amazon EKS (Jakarta EE runtime)", "description": "Replatformed EAR, shrinking over time."},
+      {"id": "site_svc", "name": "Site & Monitoring Services", "type": "backend", "service": "Amazon EKS", "description": "First services extracted via strangler fig."},
+      {"id": "rds_oracle", "name": "TrialHub Database", "type": "database", "service": "Amazon RDS for Oracle (Multi-AZ)", "description": "PL/SQL unchanged; audit tables preserved."},
+      {"id": "site_db", "name": "Service Data", "type": "database", "service": "Amazon Aurora PostgreSQL", "description": "Owned by extracted services."},
+      {"id": "etl", "name": "Safety Reconciliation", "type": "batch", "service": "AWS Step Functions + AWS Glue", "description": "Observable nightly pipeline."},
+      {"id": "sftp", "name": "IRT File Exchange", "type": "integration", "service": "AWS Transfer Family", "description": "Managed SFTP endpoint."},
+      {"id": "identity", "name": "Identity", "type": "identity", "service": "Amazon Cognito + corporate IdP", "description": "SSO with MFA for staff and sites."},
+      {"id": "audit", "name": "Audit & Monitoring", "type": "reporting", "service": "AWS CloudTrail + Amazon CloudWatch", "description": "Immutable, retained audit and app logs."},
+      {"id": "edc", "name": "EDC System", "type": "external", "service": "Vendor SaaS", "description": "Unchanged SOAP provider."},
+      {"id": "safety", "name": "Safety Database", "type": "external", "service": "Existing", "description": "Unchanged."}
+    ],
+    "target_edges": [
+      {"source": "spa", "target": "apigw", "label": "REST/JSON"},
+      {"source": "edc", "target": "apigw", "label": "SOAP (facade)"},
+      {"source": "apigw", "target": "core", "label": "Legacy routes"},
+      {"source": "apigw", "target": "site_svc", "label": "New routes"},
+      {"source": "core", "target": "rds_oracle", "label": "JDBC + PL/SQL"},
+      {"source": "site_svc", "target": "site_db", "label": "SQL"},
+      {"source": "site_svc", "target": "core", "label": "Domain events"},
+      {"source": "sftp", "target": "core", "label": "IRT files"},
+      {"source": "etl", "target": "rds_oracle", "label": "Nightly extract"},
+      {"source": "etl", "target": "safety", "label": "Reconciliation feed"},
+      {"source": "spa", "target": "identity", "label": "OIDC + MFA"},
+      {"source": "core", "target": "audit", "label": "Audit events"}
+    ],
+    "roadmap": [
+      {"name": "Mobilise and validation planning", "start_week": 0, "duration_weeks": 4, "objectives": ["Agree scope, strategy and validation approach"], "activities": ["GxP impact assessment and CSA-based validation plan", "AWS supplier qualification and quality agreement", "Map database-lock windows for active studies"], "deliverables": ["Validation Plan", "Supplier assessment"], "validation_gates": ["QA approval of Validation Plan"]},
+      {"name": "GxP landing zone", "start_week": 2, "duration_weeks": 6, "objectives": ["Qualified, EU-resident AWS foundation"], "activities": ["Multi-account landing zone with region guardrails", "EKS platform, CI/CD and IaC under change control", "CloudTrail and CloudWatch audit logging"], "deliverables": ["Qualified landing zone"], "validation_gates": ["Infrastructure IQ"]},
+      {"name": "Replatform the monolith", "start_week": 8, "duration_weeks": 14, "objectives": ["Exit WebLogic, Java 7 and Oracle 11g"], "activities": ["Upgrade to a supported Java and an open-source Jakarta EE runtime", "Containerise the EAR on EKS", "Migrate Oracle 11g to RDS for Oracle with audit-table hash reconciliation", "Automate the regression OQ suite"], "deliverables": ["Replatformed TrialHub in validation environment", "Data migration report"], "validation_gates": ["OQ regression", "Data migration verification"]},
+      {"name": "Production cutover", "start_week": 22, "duration_weeks": 6, "objectives": ["Go live outside database-lock windows"], "activities": ["Cutover after Q1 database locks", "Parallel run and PQ with clinical operations", "Hypercare"], "deliverables": ["PQ report", "Validation Summary Report"], "validation_gates": ["PQ sign-off", "QA release for GCP use"]},
+      {"name": "Strangle site and monitoring services", "start_week": 26, "duration_weeks": 16, "objectives": ["First independently validated services and new UI"], "activities": ["Extract site management and monitoring-visit services", "New SPA modules for these domains", "API Gateway routes legacy vs new"], "deliverables": ["Two extracted services", "New UI modules"], "validation_gates": ["OQ per released service"]},
+      {"name": "Integration modernisation", "start_week": 30, "duration_weeks": 12, "objectives": ["Decouple vendor integrations"], "activities": ["API facade for EDC SOAP", "Transfer Family for IRT files", "Step Functions and Glue for safety reconciliation"], "deliverables": ["Modernised interfaces"], "validation_gates": ["Interface OQ"]},
+      {"name": "Optimise and decommission", "start_week": 44, "duration_weeks": 8, "objectives": ["Retire on-premises estate"], "activities": ["Decommission WebLogic cluster and Oracle 11g", "Archive per 25-year retention", "Cost optimisation and periodic review"], "deliverables": ["Decommissioning report"], "validation_gates": ["Periodic review schedule approved"]}
+    ],
+    "quick_wins": [
+      "Start an automated regression suite on the current system - it is reused in every phase",
+      "Move the nightly safety ETL out of the EAR into a monitored scheduler",
+      "Inventory PL/SQL packages and tag those holding validated business rules",
+      "Agree the post-Q1 cutover window with the two locking studies"
+    ]
+  }
+}
