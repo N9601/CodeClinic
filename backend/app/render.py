@@ -20,7 +20,30 @@ def _node_id(raw: str) -> str:
 
 
 def _text(raw: str) -> str:
+    """Safe for the inside of a double-quoted Mermaid label (used in nodes)."""
     return raw.replace('"', "'").replace("\n", " ").strip()
+
+
+# Mermaid flowchart edge labels (|like this|) must NOT contain these chars; they
+# trip the parser into looking for shape terminators. Nodes don't have this
+# problem because their labels are inside quoted shape tokens (["..."]).
+_EDGE_UNSAFE = str.maketrans({
+    "(": "[", ")": "]",
+    "{": "[", "}": "]",
+    "|": "/",
+    '"': "'",
+    "\n": " ",
+    "<": "",
+    ">": "",
+    "`": "",
+    "#": "",
+})
+
+
+def _edge_label(raw: str) -> str:
+    s = raw.translate(_EDGE_UNSAFE).strip()
+    # Trim overly-long labels - Mermaid wraps them awkwardly past ~40 chars.
+    return (s[:38] + "…") if len(s) > 40 else s
 
 
 def _flowchart(nodes: list[tuple[str, str, str, str]], edges: list[Edge]) -> str:
@@ -35,8 +58,11 @@ def _flowchart(nodes: list[tuple[str, str, str, str]], edges: list[Edge]) -> str
         known.add(node_id)
     for edge in edges:
         if edge.source in known and edge.target in known:
-            label = _text(edge.label).replace("|", "/")
-            lines.append(f"  {_node_id(edge.source)} -->|{label}| {_node_id(edge.target)}")
+            label = _edge_label(edge.label)
+            if label:
+                lines.append(f"  {_node_id(edge.source)} -->|{label}| {_node_id(edge.target)}")
+            else:
+                lines.append(f"  {_node_id(edge.source)} --> {_node_id(edge.target)}")
     lines += [
         "  classDef t_frontend fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e",
         "  classDef t_backend fill:#ede9fe,stroke:#7c3aed,color:#3b0764",
