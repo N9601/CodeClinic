@@ -108,30 +108,34 @@ export function strategyStyle(s: string) {
 
 // ------------------------------------------------------------------ risks
 
-export const RISK_LEVEL_STYLE: Record<RiskLevel, { label: string; badge: string; cell: string; chip: string }> = {
+export const RISK_LEVEL_STYLE: Record<RiskLevel, { label: string; badge: string; cell: string; chip: string; bar: string }> = {
   critical: {
     label: 'Critical',
     badge: 'bg-red-600 text-white ring-red-600',
     cell: 'bg-red-200/80',
     chip: 'bg-red-600 text-white',
+    bar: 'bg-red-600',
   },
   high: {
     label: 'High',
     badge: 'bg-orange-100 text-orange-800 ring-orange-300',
     cell: 'bg-orange-100',
     chip: 'bg-orange-500 text-white',
+    bar: 'bg-orange-500',
   },
   medium: {
     label: 'Medium',
     badge: 'bg-amber-50 text-amber-800 ring-amber-200',
     cell: 'bg-amber-50',
     chip: 'bg-amber-400 text-amber-950',
+    bar: 'bg-amber-400',
   },
   low: {
     label: 'Low',
     badge: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
     cell: 'bg-emerald-50/70',
     chip: 'bg-emerald-500 text-white',
+    bar: 'bg-emerald-500',
   },
 }
 
