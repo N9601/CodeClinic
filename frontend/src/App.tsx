@@ -6,13 +6,12 @@ import { useHealth } from './hooks/useHealth'
 import { runAssessment, STAGE_ORDER, STAGE_RANK } from './lib/runAssessment'
 import type { RunResult } from './lib/runAssessment'
 import { MOCK_REPORT, MOCK_SAMPLES } from './mock'
-import { Intake } from './screens/Intake'
+import { INITIAL_INTAKE, Intake } from './screens/Intake'
 import type { IntakeState } from './screens/Intake'
 import { Report } from './screens/Report'
 import { INITIAL_STAGES, Running } from './screens/Running'
 import type { StageMap } from './screens/Running'
 import type { AssessRequest, SampleSummary, StageEvent, StageName } from './types'
-import { EMPTY_PROFILE } from './types'
 
 type Screen = 'intake' | 'running' | 'report'
 
@@ -38,7 +37,14 @@ function applyStage(prev: StageMap, ev: StageEvent): StageMap {
   return next
 }
 
-const allDone = (): StageMap => ({ scan: 'done', analyze: 'done', assess: 'done', recommend: 'done', assemble: 'done' })
+const allDone = (): StageMap => ({
+  scan: 'done',
+  analyze: 'done',
+  extract: 'done',
+  assess: 'done',
+  recommend: 'done',
+  assemble: 'done',
+})
 
 /** `?demo` in the URL opens the bundled LabTrack report directly (presenter safety net). */
 function initialResult(): RunResult | null {
@@ -51,7 +57,7 @@ export default function App() {
   const [result, setResult] = useState<RunResult | null>(initialResult)
   const [screen, setScreen] = useState<Screen>(() => (result ? 'report' : 'intake'))
   const [samples, setSamples] = useState<SampleSummary[] | null>(null)
-  const [intake, setIntake] = useState<IntakeState>({ profile: EMPTY_PROFILE, sampleId: null, scan: null, cloud: 'azure' })
+  const [intake, setIntake] = useState<IntakeState>(INITIAL_INTAKE)
   const [run, setRun] = useState<RunState>(NEW_RUN)
   const abortRef = useRef<AbortController | null>(null)
 
@@ -89,13 +95,24 @@ export default function App() {
     setScreen('running')
     window.scrollTo({ top: 0 })
 
-    const req: AssessRequest = {
-      profile: intake.profile,
-      sample_id: intake.sampleId,
-      signals: intake.scan?.result.signals ?? [],
-      target_cloud: intake.cloud,
-      mode: 'auto',
-    }
+    const upload = intake.upload
+    const isUpload = intake.mode === 'upload' && upload.extraction
+    const req: AssessRequest = isUpload
+      ? {
+          profile: upload.profileOverride ?? upload.extraction!.profile,
+          sample_id: null,
+          signals: [],
+          target_cloud: intake.cloud,
+          mode: 'auto',
+          extraction: upload.extraction,
+        }
+      : {
+          profile: intake.profile,
+          sample_id: intake.sampleId,
+          signals: intake.scan?.result.signals ?? [],
+          target_cloud: intake.cloud,
+          mode: 'auto',
+        }
 
     try {
       const res = await runAssessment(req, {
@@ -130,7 +147,14 @@ export default function App() {
         )}
         {screen === 'running' && (
           <Running
-            appName={intake.profile.name || 'application'}
+            appName={
+              intake.mode === 'upload'
+                ? intake.upload.profileOverride?.name ||
+                  intake.upload.extraction?.profile.name ||
+                  intake.upload.extraction?.document_title ||
+                  'application'
+                : intake.profile.name || 'application'
+            }
             cloud={intake.cloud}
             stages={run.stages}
             labels={run.labels}
@@ -138,6 +162,7 @@ export default function App() {
             error={run.error}
             notice={run.notice}
             onBack={goIntake}
+            hasExtraction={intake.mode === 'upload' && !!intake.upload.extraction}
           />
         )}
         {screen === 'report' && result && <Report report={result.report} source={result.source} onNew={goIntake} />}

@@ -112,11 +112,18 @@ export async function runAssessment(req: AssessRequest, cb: RunCallbacks): Promi
     return { report, source: 'post' }
   } catch (err) {
     if (isAbort(err)) throw err
-    // 3. bundled report for the LabTrack sample
-    if (req.sample_id === MOCK_REPORT_SAMPLE_ID) {
+    // 3. bundled report for the LabTrack sample (either as a sample card, or an upload with extraction)
+    if (req.sample_id === MOCK_REPORT_SAMPLE_ID || req.extraction) {
       cb.onNotice('Backend unreachable - replaying the bundled LabTrack LIMS report (offline demo).')
       await replayStages(cb, Boolean(req.extraction))
-      return { report: MOCK_REPORT, source: 'mock' }
+      const report = req.extraction
+        ? {
+            ...MOCK_REPORT,
+            source_document: 'labtrack-lims-assessment.pdf',
+            extraction_confidence: req.extraction.profile.confidence,
+          }
+        : MOCK_REPORT
+      return { report, source: 'mock' }
     }
     throw friendly(err)
   }
