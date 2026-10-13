@@ -285,7 +285,45 @@ class AssessmentReport(BaseModel):
         description="Original filename of the uploaded assessment document, if the report came from an ingest.",
     )
     extraction_confidence: Literal["high", "medium", "low"] | None = None
+    compliance: "ComplianceAnalysis | None" = None
+
+
+# --------------------------------------------------------------------------- stage 4: compliance (optional)
+
+
+class ComplianceGap(BaseModel):
+    id: str = Field(description="short slug, e.g. 'audit_trail_migration'")
+    title: str
+    description: str
+    severity: Literal["minor", "major", "critical"]
+    gxp_related: bool
+    frameworks: list[str] = Field(description="e.g. ['21 CFR Part 11', 'EU GMP Annex 11']")
+    clauses: list[str] = Field(description="exact clause IDs from the knowledge base, e.g. ['21 CFR 11.10(e)', 'Annex 11 §9']")
+    linked_risk_ids: list[str] = Field(default_factory=list, description="ScoredRisk.id values this gap maps to")
+    linked_component_ids: list[str] = Field(default_factory=list, description="architecture.components ids involved")
+    mitigation: str = Field(description="concrete action to close the gap")
+    validation_activity: str = Field(description="GxP validation step that evidences closure, e.g. 'IQ for the new audit log store'")
+
+
+class ComplianceControl(BaseModel):
+    name: str = Field(description="short title, e.g. 'Audit-log immutability'")
+    description: str
+    frameworks: list[str]
+    clauses: list[str]
+
+
+class ComplianceAnalysis(BaseModel):
+    headline: str = Field(description="one sentence summarising compliance posture of the proposed modernization")
+    overall_posture: Literal["low_risk", "manageable", "elevated_risk"]
+    gaps: list[ComplianceGap]
+    required_controls: list[ComplianceControl] = Field(
+        description="controls the target architecture MUST implement to stay compliant; cite clauses"
+    )
+    validation_strategy: str = Field(
+        description="2-4 sentences describing the recommended risk-based CSA / IQ-OQ-PQ approach for this migration"
+    )
 
 
 AssessRequest.model_rebuild()
 ExtractionResult.model_rebuild()
+AssessmentReport.model_rebuild()
