@@ -1,6 +1,6 @@
-import { Stethoscope } from 'lucide-react'
 import type { HealthState } from '../hooks/useHealth'
 import { isLive } from '../hooks/useHealth'
+import { Logo } from './brand/Logo'
 import { cx } from './ui'
 
 export const TAGLINE = 'Diagnose legacy pharma apps. Prescribe a compliant cloud migration plan.'
@@ -60,12 +60,10 @@ export function Header({ health, onHome }: { health: HealthState; onHome?: () =>
           className="flex min-w-0 items-center gap-3 text-left disabled:cursor-default"
           title={onHome ? 'Start a new diagnosis' : undefined}
         >
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-linear-to-br from-teal-500 to-emerald-600 text-white shadow-md shadow-teal-600/25">
-            <Stethoscope className="size-5" aria-hidden />
-          </span>
+          <Logo size={40} />
           <span className="min-w-0">
             <span className="block text-lg font-bold leading-tight tracking-tight text-slate-900">
-              Code<span className="text-teal-600">Clinic</span>
+              Code<span className="text-emerald-600">Clinic</span>
             </span>
             <span className="hidden truncate text-xs text-slate-500 md:block">{TAGLINE}</span>
           </span>
