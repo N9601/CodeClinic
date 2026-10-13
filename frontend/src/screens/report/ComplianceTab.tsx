@@ -16,7 +16,7 @@ const POSTURE_STYLE: Record<CompliancePosture, { label: string; className: strin
 const SEVERITY_STYLE: Record<ComplianceSeverity, { label: string; className: string; rank: number }> = {
   critical: { label: 'Critical', className: 'bg-red-50 text-red-700 ring-red-200', rank: 0 },
   major: { label: 'Major', className: 'bg-amber-50 text-amber-800 ring-amber-200', rank: 1 },
-  minor: { label: 'Minor', className: 'bg-slate-100 text-slate-700 ring-slate-200', rank: 2 },
+  minor: { label: 'Minor', className: 'bg-slate-100 text-slate-800 ring-slate-200', rank: 2 },
 }
 
 function sortedGaps(gaps: ComplianceGap[]): ComplianceGap[] {
@@ -117,7 +117,7 @@ export function ComplianceTab({ report }: { report: AssessmentReport }) {
                           )}
                         </div>
                       </div>
-                      <p className="text-sm leading-relaxed text-slate-700">{gap.description}</p>
+                      <p className="text-sm leading-relaxed text-slate-800">{gap.description}</p>
 
                       {gap.clauses.length > 0 && (
                         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -157,13 +157,13 @@ export function ComplianceTab({ report }: { report: AssessmentReport }) {
                           <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                             Mitigation
                           </div>
-                          <p className="text-sm leading-relaxed text-slate-700">{gap.mitigation}</p>
+                          <p className="text-sm leading-relaxed text-slate-800">{gap.mitigation}</p>
                         </div>
                         <div className="rounded-xl bg-emerald-50/60 p-3 ring-1 ring-inset ring-emerald-200/70">
                           <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-700">
                             Validation activity
                           </div>
-                          <p className="text-sm leading-relaxed text-slate-700">{gap.validation_activity}</p>
+                          <p className="text-sm leading-relaxed text-slate-800">{gap.validation_activity}</p>
                         </div>
                       </div>
                     </Card>
@@ -184,7 +184,7 @@ export function ComplianceTab({ report }: { report: AssessmentReport }) {
                 {visibleControls.map((ctl, i) => (
                   <Card key={i}>
                     <h4 className="text-sm font-semibold text-slate-900">{ctl.name}</h4>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-700">{ctl.description}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-800">{ctl.description}</p>
                     {ctl.clauses.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {ctl.clauses.map((c, j) => (
@@ -226,7 +226,7 @@ function FrameworkChip({ label, active, onClick }: { label: string; active: bool
         'rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors',
         active
           ? 'bg-emerald-600 text-white ring-emerald-600'
-          : 'bg-white text-slate-700 ring-slate-300 hover:bg-emerald-50 hover:ring-emerald-300',
+          : 'bg-white text-slate-800 ring-slate-300 hover:bg-emerald-50 hover:ring-emerald-300',
       )}
     >
       {label}

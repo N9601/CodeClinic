@@ -108,7 +108,7 @@ export function Mermaid({
           Could not render {label.toLowerCase()} - showing the source instead.
         </div>
         <p className="mb-2 line-clamp-2 text-xs text-amber-700/80">{state.message}</p>
-        <pre className="max-h-72 overflow-auto rounded-lg bg-white p-3 font-mono text-xs leading-relaxed text-slate-700 ring-1 ring-amber-100">
+        <pre className="max-h-72 overflow-auto rounded-lg bg-white p-3 font-mono text-xs leading-relaxed text-slate-800 ring-1 ring-amber-100">
           {code}
         </pre>
       </div>
@@ -132,7 +132,7 @@ export function Mermaid({
     <>
       <div className={cx('group relative', className)}>
         <div
-          className="mermaid-host overflow-x-auto rounded-xl bg-white"
+          className="mermaid-host overflow-x-auto rounded-xl border border-slate-200 bg-white p-4"
           role="img"
           aria-label={label}
           dangerouslySetInnerHTML={{ __html: state.svg }}

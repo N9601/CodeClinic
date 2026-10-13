@@ -74,7 +74,7 @@ export function ZipDropZone({ scan, onScan }: { scan: ScanState | null; onScan: 
           <button
             type="button"
             onClick={() => onScan(null)}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-white hover:text-slate-700"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-white hover:text-slate-800"
             title="Remove scan"
             aria-label="Remove scan"
           >
@@ -126,7 +126,7 @@ export function ZipDropZone({ scan, onScan }: { scan: ScanState | null; onScan: 
         {busyName ? (
           <>
             <Spinner className="size-6 text-teal-600" />
-            <div className="text-sm font-medium text-slate-700">Scanning {busyName}...</div>
+            <div className="text-sm font-medium text-slate-800">Scanning {busyName}...</div>
             <div className="text-xs text-slate-500">Detecting languages, frameworks, versions and risky patterns</div>
           </>
         ) : (
@@ -134,7 +134,7 @@ export function ZipDropZone({ scan, onScan }: { scan: ScanState | null; onScan: 
             <span className="grid size-10 place-items-center rounded-full bg-white text-teal-600 shadow-sm ring-1 ring-slate-200">
               <CloudUpload className="size-5" aria-hidden />
             </span>
-            <div className="text-sm font-medium text-slate-700">
+            <div className="text-sm font-medium text-slate-800">
               Drop a <span className="font-semibold">.zip</span> of the code, or <span className="text-teal-700 underline">browse</span>
             </div>
             <div className="text-xs text-slate-500">Optional - adds file-level evidence to the scores</div>

@@ -90,7 +90,7 @@ export function RoadmapTab({ report }: { report: AssessmentReport }) {
         <Mermaid code={report.diagrams.roadmap} label="Migration roadmap Gantt chart" />
       </Card>
 
-      <div className="flex items-center gap-2 px-1 text-sm font-semibold text-slate-700">
+      <div className="flex items-center gap-2 px-1 text-sm font-semibold text-slate-800">
         <ClipboardCheck className="size-4 text-teal-600" aria-hidden /> Phase plan
       </div>
       <div className="space-y-4">

@@ -16,7 +16,7 @@ export function ArchitectureTab({ report }: { report: AssessmentReport }) {
         <div className="mb-3">
           <Badge className="bg-teal-50 px-3 py-1 text-sm text-teal-800 ring-teal-200">{a.architecture_style}</Badge>
         </div>
-        <p className="max-w-4xl text-sm leading-relaxed text-slate-700 sm:text-base">{a.summary}</p>
+        <p className="max-w-4xl text-sm leading-relaxed text-slate-800 sm:text-base">{a.summary}</p>
       </Card>
 
       <Card>
@@ -49,7 +49,7 @@ export function ArchitectureTab({ report }: { report: AssessmentReport }) {
                   <td className="px-3 py-3.5">
                     <Badge>{titleCase(c.type)}</Badge>
                   </td>
-                  <td className="w-[24%] px-3 py-3.5 text-slate-700">{c.technology}</td>
+                  <td className="w-[24%] px-3 py-3.5 text-slate-800">{c.technology}</td>
                   <td className="px-5 py-3.5 sm:px-6">
                     {c.issues.length ? (
                       <BulletList items={c.issues} marker="bg-amber-500" />

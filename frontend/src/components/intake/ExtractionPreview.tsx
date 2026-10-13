@@ -80,7 +80,7 @@ export function ExtractionPreview({
           <button
             type="button"
             onClick={() => setSummaryOpen((v) => !v)}
-            className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-50"
             aria-expanded={summaryOpen}
           >
             <span className="inline-flex items-center gap-1.5">
@@ -89,7 +89,7 @@ export function ExtractionPreview({
             </span>
           </button>
           {summaryOpen && (
-            <div className="border-t border-slate-200 px-3 py-2.5 text-sm leading-relaxed text-slate-700">
+            <div className="border-t border-slate-200 px-3 py-2.5 text-sm leading-relaxed text-slate-800">
               {extraction.document_summary}
             </div>
           )}

@@ -105,7 +105,7 @@ export function RisksTab({ report }: { report: AssessmentReport }) {
                         <span className="text-slate-300">-</span>
                       )}
                     </td>
-                    <td className="w-[34%] px-5 py-3.5 leading-relaxed text-slate-700 sm:px-6">{r.mitigation}</td>
+                    <td className="w-[34%] px-5 py-3.5 leading-relaxed text-slate-800 sm:px-6">{r.mitigation}</td>
                   </tr>
                 )
               })}

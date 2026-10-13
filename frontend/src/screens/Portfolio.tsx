@@ -156,10 +156,13 @@ function WaveColumn({
 }) {
   return (
     <div className={cx('rounded-2xl border p-4', WAVE_TONE[wave])}>
-      <div className="mb-3 flex items-center gap-2">
-        <span className={cx('inline-block size-2 rounded-full', WAVE_DOT[wave])} aria-hidden />
-        <h3 className="font-display text-sm font-bold uppercase tracking-wider text-slate-900">{label}</h3>
-        <span className="ml-auto text-xs text-slate-500">{apps.length} app{apps.length === 1 ? '' : 's'}</span>
+      <div className="mb-3 flex flex-col gap-1">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-600">Wave</span>
+        <div className="flex items-center gap-2">
+          <span className={cx('inline-block size-2 rounded-full', WAVE_DOT[wave])} aria-hidden />
+          <h3 className="font-display text-base font-bold uppercase tracking-wider text-slate-900">{label}</h3>
+          <span className="ml-auto text-xs text-slate-500">{apps.length} app{apps.length === 1 ? '' : 's'}</span>
+        </div>
       </div>
       {apps.length === 0 ? (
         <p className="text-xs italic text-slate-500">No apps in this wave.</p>
@@ -179,7 +182,7 @@ function AppCard({ app, onOpenReport }: { app: PortfolioAppSummary; onOpenReport
   const readinessBarColor =
     app.readiness >= 70 ? 'bg-emerald-500' : app.readiness >= 40 ? 'bg-amber-500' : 'bg-red-500'
   return (
-    <Card className="p-4" padded={false}>
+    <Card className="p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md" padded={false}>
       <div className="mb-2 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h4 className="truncate text-sm font-semibold text-slate-900">{app.name}</h4>
@@ -193,7 +196,7 @@ function AppCard({ app, onOpenReport }: { app: PortfolioAppSummary; onOpenReport
       <div className="mb-2">
         <div className="flex items-center justify-between text-[11px] text-slate-500">
           <span>Readiness · {app.readiness_band}</span>
-          <span className="font-semibold tabular-nums text-slate-700">{app.readiness}/100</span>
+          <span className="font-semibold tabular-nums text-slate-800">{app.readiness}/100</span>
         </div>
         <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
           <div className={cx('h-full rounded-full', readinessBarColor)} style={{ width: `${Math.max(2, app.readiness)}%` }} />
@@ -211,7 +214,7 @@ function AppCard({ app, onOpenReport }: { app: PortfolioAppSummary; onOpenReport
             {app.high_risks} high
           </Badge>
         )}
-        <Badge className="bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700 ring-slate-200">{app.weeks}w</Badge>
+        <Badge className="bg-slate-100 px-2 py-0.5 text-[11px] text-slate-800 ring-slate-200">{app.weeks}w</Badge>
         {app.gxp_critical && (
           <Badge className="bg-violet-50 px-2 py-0.5 text-[11px] text-violet-700 ring-violet-200" icon={ShieldCheck}>
             GxP

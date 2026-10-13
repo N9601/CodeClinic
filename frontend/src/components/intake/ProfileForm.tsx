@@ -83,7 +83,7 @@ export function ProfileForm({
         const invalid = f.key === 'name' && nameError
         return (
           <div key={f.key} className={cx(f.wide && 'md:col-span-2')}>
-            <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-slate-700">
+            <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-slate-800">
               {f.label}
               {f.key === 'name' && <span className="ml-0.5 text-red-600">*</span>}
             </label>

@@ -62,7 +62,7 @@ export function PdfDropZone({
         {busy ? (
           <>
             <Spinner className="size-6 text-teal-600" />
-            <div className="text-sm font-medium text-slate-700">Reading document...</div>
+            <div className="text-sm font-medium text-slate-800">Reading document...</div>
             <div className="text-xs text-slate-500">Extracting the application profile and architecture signals</div>
           </>
         ) : (
@@ -70,7 +70,7 @@ export function PdfDropZone({
             <span className="grid size-10 place-items-center rounded-full bg-white text-teal-600 shadow-sm ring-1 ring-slate-200">
               <FileText className="size-5" aria-hidden />
             </span>
-            <div className="text-sm font-medium text-slate-700">
+            <div className="text-sm font-medium text-slate-800">
               Drop a <span className="font-semibold">.pdf</span> assessment, or{' '}
               <span className="text-teal-700 underline">browse</span>
             </div>

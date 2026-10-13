@@ -219,7 +219,7 @@ export function Report({
             )}
             {report.source_document && (
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Badge className="bg-slate-50 px-3 py-1 text-sm text-slate-700 ring-slate-200" icon={FileText}>
+                <Badge className="bg-slate-50 px-3 py-1 text-sm text-slate-800 ring-slate-200" icon={FileText}>
                   Extracted from: {report.source_document}
                 </Badge>
                 {report.extraction_confidence && (
@@ -241,7 +241,7 @@ export function Report({
               <Badge className={cx(strat.badge, 'px-3 py-1 text-sm')} title={strat.hint}>
                 Strategy: {strat.label}
               </Badge>
-              <Badge className="bg-slate-50 px-3 py-1 text-sm text-slate-700 ring-slate-200" icon={CalendarClock}>
+              <Badge className="bg-slate-50 px-3 py-1 text-sm text-slate-800 ring-slate-200" icon={CalendarClock}>
                 {s.total_weeks} weeks
               </Badge>
               {s.gxp_critical && (

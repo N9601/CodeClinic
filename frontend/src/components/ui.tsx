@@ -77,7 +77,7 @@ export function Badge({
       title={title}
       className={cx(
         'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset',
-        className ?? 'bg-slate-100 text-slate-700 ring-slate-200',
+        className ?? 'bg-slate-100 text-slate-800 ring-slate-200',
       )}
     >
       {Icon && <Icon className="size-3.5" aria-hidden />}
@@ -116,7 +116,7 @@ export function BulletList({ items, className, marker = 'bg-teal-500' }: { items
   return (
     <ul className={cx('space-y-1.5', className)}>
       {items.map((item, i) => (
-        <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-slate-700">
+        <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-slate-800">
           <span className={cx('mt-2 size-1.5 shrink-0 rounded-full', marker)} aria-hidden />
           <span>{item}</span>
         </li>
@@ -157,7 +157,7 @@ export function Button({
     primary:
       'bg-teal-600 text-white shadow-sm shadow-teal-600/30 hover:bg-teal-700 focus-visible:outline-teal-600 disabled:bg-slate-300 disabled:shadow-none',
     secondary:
-      'bg-white text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus-visible:outline-teal-600 disabled:text-slate-400',
+      'bg-white text-slate-800 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus-visible:outline-teal-600 disabled:text-slate-400',
     ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-teal-600',
   }[variant]
   return (

@@ -164,7 +164,7 @@ export function OverviewTab({ report, animate = true }: { report: AssessmentRepo
           {report.plan.quick_wins.length ? (
             <ul className="space-y-2.5">
               {report.plan.quick_wins.map((w, i) => (
-                <li key={i} className="flex gap-3 text-sm leading-relaxed text-slate-700">
+                <li key={i} className="flex gap-3 text-sm leading-relaxed text-slate-800">
                   <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-500" aria-hidden />
                   {w}
                 </li>

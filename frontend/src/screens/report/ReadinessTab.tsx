@@ -61,7 +61,7 @@ export function ReadinessTab({ report, animate = true }: { report: AssessmentRep
               <div className={cx('h-full rounded-full', dimensionBarClass(d.score))} style={{ width: `${(d.score / 10) * 100}%` }} />
             </div>
             <div className="mb-3 text-xs font-medium text-slate-500">Weight {pct(d.weight)}</div>
-            <p className="mb-3 text-sm leading-relaxed text-slate-700">{d.rationale}</p>
+            <p className="mb-3 text-sm leading-relaxed text-slate-800">{d.rationale}</p>
             {d.evidence.length > 0 && (
               <div className="mt-auto rounded-xl bg-slate-50 p-3 ring-1 ring-inset ring-slate-200/70">
                 <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">Evidence</div>
