@@ -28,23 +28,18 @@ try:
 except Exception:
     _HAS_GEMINI_SDK = False
 
-MAX_CHAT_TOKENS = 1500  # keep answers tight; the UI shows them in a side panel
+MAX_CHAT_TOKENS = 600  # chat answers should fit in a side panel without scrolling
 
-CHAT_SYSTEM = """You are the Advisor view of CodeClinic, answering questions from a \
-pharma IT leader about ONE specific application's modernization report (shown below).
+CHAT_SYSTEM = """You are CodeClinic's Advisor, answering questions about ONE specific app's modernization report (below).
 
-Rules:
-- Ground every answer in the report. Quote risk IDs (R01, R02, ...), component names, \
-phase names and clause IDs verbatim from the report where relevant.
-- When a question concerns compliance, cite specific regulation clauses from the \
-knowledge base and the report's compliance section when present.
-- If the report does not answer a question (e.g. about a different app, a general \
-tutorial, or a cost figure the report doesn't contain), say so plainly and offer the \
-closest grounded answer or suggest editing the profile and re-running.
-- Keep answers concise - 2-4 short paragraphs or a tight list. Use markdown for \
-emphasis, lists and short tables. No preamble like 'Great question!'.
-- Never invent new risks, new strategies or new regulatory clauses.
-"""
+OUTPUT CONTRACT - follow exactly, no exceptions:
+- Max 120 words. Shorter is better.
+- Direct answer first. No preamble ('Great question', 'Based on the report', 'Certainly').
+- Bullets only when listing 3+ items. Otherwise prose.
+- Use **bold** for key terms. Avoid headers (#, ##) - they look clumsy in a side panel.
+- Quote risk IDs (R01), component names, phase names, clause IDs verbatim from the report.
+- If the report doesn't cover something, say so in one sentence. Don't speculate.
+- Never invent risks, strategies, or regulations."""
 
 
 class ChatMessage(BaseModel):
@@ -67,26 +62,94 @@ class ChatSeedResponse(BaseModel):
 
 
 def _report_block(report: AssessmentReport) -> str:
-    """Compact the report into a model-readable string. Keep structural fields; drop
-    rendered Mermaid (not useful for Q&A) and the full signals list (file paths add noise)."""
+    """Compact digest the model actually needs for Q&A. The full report JSON is
+    ~15k+ tokens; this is <2k. Fast first-token latency, tighter answers."""
 
-    data = report.model_dump(mode="json", exclude={"diagrams"})
-    data.pop("signals", None)
-    return json.dumps(data, indent=1, ensure_ascii=False)
+    def _line(k: str, v) -> str:
+        return f"- **{k}**: {v}"
 
-
-def _system_prompt(report: AssessmentReport) -> list[dict]:
-    """System prompt with knowledge base + report. Both are stable within a chat
-    session (same prefix across turns), so we mark both for caching."""
-    return [
-        {"type": "text", "text": prompts.system_prompt(), "cache_control": {"type": "ephemeral"}},
-        {"type": "text", "text": CHAT_SYSTEM},
-        {
-            "type": "text",
-            "text": f"<report id={report.id!r}>\n{_report_block(report)}\n</report>",
-            "cache_control": {"type": "ephemeral"},
-        },
+    lines: list[str] = [
+        f"# {report.profile.name}",
+        f"_{report.profile.business_function or report.architecture.architecture_style}_",
+        "",
+        "## Headline",
+        report.plan.headline,
+        "",
+        "## Summary",
+        _line("Readiness", f"{report.readiness.overall}/100 ({report.readiness.band})"),
+        _line("Strategy", report.plan.overall_strategy),
+        _line("Timeline", f"{report.summary.total_weeks} weeks across {len(report.plan.roadmap)} phases"),
+        _line("Target cloud", report.target_cloud.upper()),
+        _line("GxP critical", "yes" if report.summary.gxp_critical else "no"),
+        _line("Strategy mix", ", ".join(f"{k} x{v}" for k, v in report.summary.strategy_mix.items())),
+        "",
+        "## Readiness (1-10 per dimension)",
     ]
+    for d in report.readiness.dimensions:
+        lines.append(f"- {d.label} ({d.score}/10 · weight {d.weight:.0%}) - {d.rationale}")
+
+    lines += ["", "## Risks (ranked)"]
+    for r in report.risks:
+        gxp = " · GxP" if r.gxp_related else ""
+        lines.append(f"- **{r.id}** {r.title} [{r.level}, {r.likelihood}x{r.impact}{gxp}] - mitigation: {r.mitigation}")
+
+    lines += ["", "## Opportunities"]
+    for o in report.opportunities:
+        lines.append(f"- {o.title} ({o.effort}) - {o.benefit}")
+
+    lines += ["", "## Architecture components"]
+    for c in report.architecture.components:
+        issues = f" (issues: {'; '.join(c.issues)})" if c.issues else ""
+        lines.append(f"- `{c.id}` {c.name} ({c.type}, {c.technology}){issues}")
+
+    lines += ["", "## 7R strategy per component"]
+    name_by_id = {c.id: c.name for c in report.architecture.components}
+    for cs in report.plan.component_strategies:
+        name = name_by_id.get(cs.component_id, cs.component_id)
+        lines.append(f"- {name}: **{cs.strategy}** -> {cs.target_service}. {cs.rationale}")
+
+    lines += ["", "## Target architecture", report.plan.target_summary, ""]
+    lines += ["## Patterns"]
+    for p in report.plan.patterns:
+        lines.append(f"- **{p.name}**: {p.why}")
+
+    lines += ["", "## Roadmap phases"]
+    for ph in sorted(report.plan.roadmap, key=lambda x: x.start_week):
+        gates = f" | gates: {', '.join(ph.validation_gates)}" if ph.validation_gates else ""
+        lines.append(
+            f"- **{ph.name}** (weeks {ph.start_week}-{ph.start_week + ph.duration_weeks}){gates}"
+        )
+
+    lines += ["", "## Quick wins"]
+    for w in report.plan.quick_wins:
+        lines.append(f"- {w}")
+
+    if report.compliance:
+        c = report.compliance
+        lines += ["", f"## Compliance (posture: {c.overall_posture})", c.headline, "", "### Gaps"]
+        for g in c.gaps:
+            risks = f" linked risks: {', '.join(g.linked_risk_ids)}" if g.linked_risk_ids else ""
+            lines.append(
+                f"- **{g.id}** {g.title} [{g.severity}] clauses: {', '.join(g.clauses)}.{risks}"
+                f" Mitigation: {g.mitigation}. Validation: {g.validation_activity}"
+            )
+        lines += ["", "### Required controls"]
+        for ctrl in c.required_controls:
+            lines.append(f"- **{ctrl.name}** - clauses: {', '.join(ctrl.clauses)}. {ctrl.description}")
+        lines += ["", "### Validation strategy", c.validation_strategy]
+
+    return "\n".join(lines)
+
+
+def _system_prompt(report: AssessmentReport) -> str | list[dict]:
+    """Returns a single flat text block. We previously bundled the full
+    knowledge-base system prompt and the raw report JSON here (~25k tokens),
+    which made every chat turn slow to first token. The compact report digest
+    carries everything the chatbot needs."""
+    return (
+        f"{CHAT_SYSTEM}\n\n"
+        f"=== REPORT: {report.profile.name} (id {report.id}) ===\n{_report_block(report)}"
+    )
 
 
 def _seeds_for(report: AssessmentReport) -> list[SeedQuestion]:
@@ -320,10 +383,7 @@ async def _stream_gemini(report: AssessmentReport, messages: list[ChatMessage]) 
     """Stream from Gemini. If the first model returns 503 before any token is
     emitted, try the next one. Raises on hard failure so caller falls back."""
     client = google_genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-    system_text = (
-        prompts.system_prompt() + "\n\n" + CHAT_SYSTEM + "\n\n"
-        + f"<report id={report.id!r}>\n{_report_block(report)}\n</report>"
-    )
+    system_text = _system_prompt(report)  # compact digest, see _report_block
     contents = []
     for m in messages:
         role = "user" if m.role == "user" else "model"
@@ -366,7 +426,7 @@ async def _stream_claude(report: AssessmentReport, messages: list[ChatMessage]) 
     async with client.messages.stream(
         model=pipeline.MODEL,
         max_tokens=MAX_CHAT_TOKENS,
-        system=_system_prompt(report),
+        system=[{"type": "text", "text": _system_prompt(report), "cache_control": {"type": "ephemeral"}}],
         messages=anthropic_messages,
         output_config={"effort": "low"},
     ) as stream:
