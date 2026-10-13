@@ -29,13 +29,15 @@ import { downloadText, reportToMarkdown, slugify } from '../lib/markdown'
 import type { ReportSource } from '../lib/runAssessment'
 import type { AssessmentReport } from '../types'
 import { ArchitectureTab } from './report/ArchitectureTab'
+import { ComplianceTab } from './report/ComplianceTab'
 import { OverviewTab } from './report/OverviewTab'
 import { ReadinessTab } from './report/ReadinessTab'
 import { RisksTab } from './report/RisksTab'
 import { RoadmapTab } from './report/RoadmapTab'
 import { TargetTab } from './report/TargetTab'
+import { ChatPanel } from '../components/chat/ChatPanel'
 
-type TabKey = 'overview' | 'architecture' | 'readiness' | 'risks' | 'target' | 'roadmap'
+type TabKey = 'overview' | 'architecture' | 'readiness' | 'risks' | 'target' | 'roadmap' | 'compliance'
 
 interface TabDef {
   key: TabKey
@@ -95,6 +97,14 @@ const TABS: TabDef[] = [
     icon: Route,
     render: (r) => <RoadmapTab report={r} />,
   },
+  {
+    key: 'compliance',
+    label: 'Compliance',
+    caption: 'Objective 6',
+    printTitle: 'Objective 6 · Regulatory gap analysis',
+    icon: ShieldCheck,
+    render: (r) => <ComplianceTab report={r} />,
+  },
 ]
 
 function usePrintAll() {
@@ -147,7 +157,8 @@ export function Report({
 
   const s = report.summary
   const strat = strategyStyle(s.overall_strategy)
-  const active = TABS.find((t) => t.key === tab) ?? TABS[0]
+  const availableTabs = TABS.filter((t) => (t.key === 'compliance' ? !!report.compliance : true))
+  const active = availableTabs.find((t) => t.key === tab) ?? availableTabs[0]
 
   function selectTab(key: TabKey) {
     setTab(key)
@@ -276,7 +287,7 @@ export function Report({
 
       {printAll ? (
         <div className="space-y-10">
-          {TABS.map((t) => (
+          {availableTabs.map((t) => (
             <section key={t.key} className="print-section">
               <h2 className="mb-4 flex items-center gap-2 border-b border-slate-200 pb-2 text-xl font-bold text-slate-900">
                 <t.icon className="size-5 text-teal-600" aria-hidden />
@@ -293,7 +304,7 @@ export function Report({
             className="no-print sticky top-16 z-20 -mx-4 mb-6 border-b border-slate-200 bg-slate-50/90 px-4 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
           >
             <div role="tablist" aria-label="Report sections" className="no-scrollbar -mb-px flex gap-1 overflow-x-auto">
-              {TABS.map((t) => {
+              {availableTabs.map((t) => {
                 const selected = t.key === tab
                 return (
                   <button
@@ -336,6 +347,7 @@ export function Report({
       <div className="mx-[-1rem] mt-12 sm:mx-[-1.5rem] lg:mx-[-2rem]">
         <TrustBand />
       </div>
+      <ChatPanel report={report} />
     </div>
   )
 }
